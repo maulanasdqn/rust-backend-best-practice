@@ -1,0 +1,3 @@
+mod postgres_transaction_repository;
+
+pub use postgres_transaction_repository::PostgresTransactionRepository;

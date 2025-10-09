@@ -1,0 +1,63 @@
+# Testing shortcuts with better UI
+# Install cargo-make: cargo install cargo-make
+# Run with: cargo make <task>
+
+[tasks.test]
+description = "Run tests with cargo-nextest (better UI)"
+command = "cargo"
+args = ["nextest", "run"]
+
+[tasks.test-watch]
+description = "Watch tests continuously with cargo-watch"
+command = "cargo"
+args = ["watch", "-x", "nextest run"]
+
+[tasks.test-fast]
+description = "Run tests in parallel (fast feedback)"
+command = "cargo"
+args = ["nextest", "run", "--profile", "fast"]
+
+[tasks.test-coverage]
+description = "Generate code coverage report (HTML)"
+command = "cargo"
+args = ["llvm-cov", "nextest", "--html"]
+
+[tasks.test-coverage-open]
+description = "Generate and open coverage report"
+command = "cargo"
+args = ["llvm-cov", "nextest", "--open"]
+
+[tasks.test-coverage-lcov]
+description = "Generate coverage in lcov format"
+command = "cargo"
+args = ["llvm-cov", "nextest", "--lcov", "--output-path", "lcov.info"]
+
+[tasks.test-package]
+description = "Test a specific package"
+command = "cargo"
+args = ["nextest", "run", "-p", "${@}"]
+
+[tasks.test-unit]
+description = "Run only unit tests"
+command = "cargo"
+args = ["nextest", "run", "--lib"]
+
+[tasks.test-integration]
+description = "Run only integration tests"
+command = "cargo"
+args = ["nextest", "run", "--test"]
+
+[tasks.test-ci]
+description = "Run tests in CI mode (with retries)"
+command = "cargo"
+args = ["nextest", "run", "--profile", "ci"]
+
+[tasks.test-verbose]
+description = "Run tests with verbose output"
+command = "cargo"
+args = ["nextest", "run", "--success-output", "immediate"]
+
+[tasks.test-clean]
+description = "Clean test artifacts"
+command = "cargo"
+args = ["clean"]

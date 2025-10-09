@@ -1,0 +1,11 @@
+[alias]
+format = "fmt --all"
+format-check = "fmt --all --check"
+lint = "clippy --all-targets --all-features -- -D warnings"
+lint-fix = "clippy --all-targets --all-features --fix --allow-dirty --allow-staged -- -D warnings"
+check-all = "run --bin check-all"
+fix-all = "run --bin fix-all"
+b = "build"
+br = "build --release"
+t = "test"
+ta = "test --all"

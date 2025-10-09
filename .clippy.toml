@@ -1,0 +1,127 @@
+# Clippy configuration for financial-tracker-api
+
+# Set the MSRV (Minimum Supported Rust Version)
+msrv = "1.75.0"
+
+# ============================================================================
+# Test-specific Allowances
+# ============================================================================
+# Allow certain practices in test code that are forbidden in production code
+allow-expect-in-tests = true
+allow-unwrap-in-tests = true
+allow-dbg-in-tests = true
+allow-print-in-tests = true
+
+# ============================================================================
+# Complexity Thresholds
+# ============================================================================
+# Maximum cognitive complexity for a single function
+# Cognitive complexity measures how difficult code is to understand
+cognitive-complexity-threshold = 30
+
+# Maximum number of lines for a single function
+# Encourages breaking down large functions into smaller ones
+too-many-lines-threshold = 100
+
+# Type complexity threshold
+# Prevents overly complex generic types like Vec<HashMap<String, Result<...>>>
+type-complexity-threshold = 250
+
+# Maximum number of function arguments
+# Forces use of structs for functions with many parameters
+too-many-arguments-threshold = 7
+
+# ============================================================================
+# Enum Configuration
+# ============================================================================
+# Enum variant size threshold (in bytes)
+# Large enum variants can cause stack issues
+enum-variant-size-threshold = 200
+
+# ============================================================================
+# Naming Conventions
+# ============================================================================
+# Disallowed variable names (encourage descriptive names)
+disallowed-names = ["foo", "bar", "baz", "quux", "dummy", "tmp", "temp"]
+
+# Minimum length for single character bindings
+# Allows common short names like 'x', 'y', 'i', 'j'
+single-char-binding-names-threshold = 4
+
+# ============================================================================
+# Documentation
+# ============================================================================
+# Minimum length for public function documentation
+doc-valid-idents = ["UUID", "API", "HTTP", "JSON", "SQL", "CRUD", "URL", "ID", "DTO"]
+
+# Missing docs are handled via workspace lints in Cargo.toml
+# missing-docs-in-crate-items = true (configured in Cargo.toml)
+
+# ============================================================================
+# Module Organization
+# ============================================================================
+# Module organization is handled via workspace lints in Cargo.toml
+
+# ============================================================================
+# Array and Collection Sizes
+# ============================================================================
+# Warn about overly large arrays on the stack
+# Arrays larger than this should probably be Vec or on the heap
+array-size-threshold = 512000
+
+# ============================================================================
+# String and Text
+# ============================================================================
+# String handling is done via workspace lints in Cargo.toml
+
+# ============================================================================
+# Trait Bounds
+# ============================================================================
+# Maximum number of trait bounds in a where clause
+# Encourages splitting complex trait bounds
+max-trait-bounds = 5
+
+# ============================================================================
+# Numeric Literals
+# ============================================================================
+# Minimum number of digits to require underscores in literals
+# E.g., 1000000 -> 1_000_000
+literal-representation-threshold = 10000
+
+# ============================================================================
+# Verbosity
+# ============================================================================
+# Encourage verbose bit masking for clarity
+verbose-bit-mask-threshold = 1
+
+# ============================================================================
+# Performance
+# ============================================================================
+# Warn about excessive use of pass by value for large types
+# This is the minimum size (in bytes) for a type to be considered "large"
+trivial-copy-size-limit = 128
+
+# Warn about functions returning large types by value
+# Encourages using Box or references for large return types
+pass-by-value-size-limit = 256
+
+# ============================================================================
+# Async Configuration
+# ============================================================================
+# Allow underscore imports (commonly used for trait implementation)
+# E.g., use async_trait::async_trait; allows: use async_trait::_;
+suppress-restriction-lint-in-const = true
+
+# ============================================================================
+# Financial/Precision
+# ============================================================================
+# For financial applications, we're particularly strict about:
+# - float arithmetic (handled via workspace lints)
+# - precision loss (handled via workspace lints)
+# - These are configured in workspace Cargo.toml
+
+# ============================================================================
+# Future Compatibility
+# ============================================================================
+# Check against future incompatibilities
+# warn-on-all-wildcard-imports = true (configured in Cargo.toml)

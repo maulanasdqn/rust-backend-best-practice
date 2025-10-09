@@ -1,0 +1,25 @@
+[package]
+name = "fta-budgets"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+fta-types = { path = "../fta-types" }
+fta-errors = { path = "../fta-errors" }
+fta-database = { path = "../fta-database" }
+fta-validation = { path = "../fta-validation" }
+anyhow.workspace = true
+async-trait.workspace = true
+axum.workspace = true
+chrono.workspace = true
+paginator-rs.workspace = true
+paginator-utils.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sqlx.workspace = true
+tokio.workspace = true
+utoipa.workspace = true
+uuid.workspace = true
+
+[lints]
+workspace = true

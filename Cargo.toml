@@ -1,0 +1,111 @@
+[workspace]
+resolver = "2"
+members = [
+  "fta-accounts",
+  "fta-auth",
+  "fta-budgets",
+  "fta-database",
+  "fta-errors",
+  "fta-migration",
+  "fta-server",
+  "fta-transactions",
+  "fta-types",
+  "fta-users",
+  "fta-validation",
+]
+
+[workspace.dependencies]
+anyhow = "1.0"
+argon2 = { version = "0.5.3", features = ["password-hash"] }
+async-trait = "0.1"
+axum = { version = "0.8", features = ["json", "macros", "multipart", "ws"] }
+chrono = { version = "0.4", features = ["serde"] }
+dotenvy = "0.15.6"
+google-oauth = "1.11"
+jsonwebtoken = "9.3.0"
+lettre = { version = "0.11", features = ["tokio1-native-tls"] }
+oauth2 = "4.4.1"
+paginator-rs = "0.2.0"
+paginator-utils = "0.2.0"
+redis = { version = "0.32.0", features = [
+  "aio",
+  "connection-manager",
+  "tokio-comp",
+] }
+reqwest = { version = "0.12", features = ["json"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sqlx = { version = "0.8", features = [
+  "bigdecimal",
+  "chrono",
+  "derive",
+  "json",
+  "macros",
+  "migrate",
+  "postgres",
+  "runtime-tokio",
+  "tls-native-tls",
+  "uuid",
+] }
+tokio = { version = "1.45.1", features = ["full"] }
+tower = { version = "0.5", features = ["retry", "util"] }
+tower-http = { version = "0.6.6", features = ["cors", "trace"] }
+tracing = "0.1"
+tracing-appender = "0.2"
+tracing-subscriber = { version = "0.3", features = [
+  "ansi",
+  "env-filter",
+  "json",
+  "time",
+] }
+utoipa = { version = "5.3.1", features = [
+  "axum_extras",
+  "chrono",
+  "time",
+  "url",
+  "uuid",
+  "yaml",
+] }
+utoipa-axum = "0.2"
+utoipa-swagger-ui = { version = "9.0.2", features = ["axum"] }
+uuid = { version = "1.0", features = ["serde", "v4"] }
+zod-rs = "0.2.0"
+# Auth-specific dependencies
+totp-rs = "5.6"
+qrcode = "0.14"
+base32 = "0.5"
+rand = "0.9"
+hex = "0.4"
+urlencoding = "2.1"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+cargo_common_metadata = "allow"
+enum_glob_use = "deny"
+expect_used = "warn"
+if_not_else = "allow"
+inefficient_to_string = "deny"
+missing_const_for_fn = "warn"
+missing_docs_in_private_items = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+module_name_repetitions = "allow"
+multiple_crate_versions = "allow"
+must_use_candidate = "allow"
+needless_pass_by_value = "warn"
+nursery = { level = "warn", priority = -1 }
+panic = "warn"
+pedantic = { level = "warn", priority = -1 }
+similar_names = "allow"
+single_match_else = "allow"
+todo = "warn"
+trivially_copy_pass_by_ref = "deny"
+unimplemented = "warn"
+unnecessary_wraps = "warn"
+unwrap_used = "deny"
+wildcard_imports = "deny"
+
+[workspace.lints.rust]
+missing_debug_implementations = "warn"
+unsafe_code = "forbid"
+

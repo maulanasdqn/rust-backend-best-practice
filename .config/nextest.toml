@@ -1,0 +1,33 @@
+# Nextest configuration for better test UI
+# https://nexte.st/book/configuration.html
+
+[profile.default]
+# Show test output for failing tests
+failure-output = "immediate"
+# Show successful test output (none, final, immediate)
+success-output = "final"
+# Show test execution status
+status-level = "pass"
+# Number of test threads
+test-threads = 8
+
+# Show test progress
+[profile.default.junit]
+path = "target/nextest/default/junit.xml"
+
+# CI profile for continuous integration
+[profile.ci]
+failure-output = "immediate-final"
+success-output = "final"
+retries = { backoff = "exponential", count = 2, delay = "1s" }
+
+# Fast profile for quick feedback
+[profile.fast]
+test-threads = 16
+failure-output = "immediate"
+success-output = "never"
+
+# Slow tests configuration
+[[profile.default.overrides]]
+filter = 'test(timestamp)'
+slow-timeout = { period = "60s", terminate-after = 2 }

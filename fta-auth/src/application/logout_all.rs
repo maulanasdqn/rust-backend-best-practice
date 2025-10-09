@@ -1,0 +1,36 @@
+use anyhow::Context;
+use std::sync::Arc;
+use uuid::Uuid;
+
+use crate::domain::RefreshTokenRepository;
+
+/// Use case for logging out a user from all devices (invalidates all refresh tokens)
+pub struct LogoutAll {
+    refresh_token_repository: Arc<dyn RefreshTokenRepository>,
+}
+
+impl LogoutAll {
+    pub fn new(refresh_token_repository: Arc<dyn RefreshTokenRepository>) -> Self {
+        Self {
+            refresh_token_repository,
+        }
+    }
+
+    /// Logs out a user from all devices by deleting all their refresh tokens
+    ///
+    /// # Arguments
+    /// * `user_id` - The user's ID
+    pub async fn execute(&self, user_id: Uuid) -> anyhow::Result<()> {
+        self.refresh_token_repository
+            .delete_by_user_id(&user_id)
+            .await
+            .context("Failed to delete all refresh tokens")?;
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    // Integration tests would go here
+}

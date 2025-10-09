@@ -1,0 +1,24 @@
+# Rustfmt configuration for financial-tracker-api
+# Only stable features are included
+
+# Basic formatting
+edition = "2021"
+hard_tabs = false
+tab_spaces = 4
+newline_style = "Unix"
+use_small_heuristics = "Default"
+
+# Line width
+max_width = 100
+
+# Imports
+reorder_imports = true
+reorder_modules = true
+
+# Code organization
+use_field_init_shorthand = true
+use_try_shorthand = true
+
+# Match expressions
+match_block_trailing_comma = true
+match_arm_leading_pipes = "Never"
