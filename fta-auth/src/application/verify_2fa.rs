@@ -11,6 +11,15 @@ pub struct Verify2FA {
     two_factor_service: TwoFactorService,
 }
 
+impl std::fmt::Debug for Verify2FA {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Verify2FA")
+            .field("user_repository", &"Arc<dyn UserRepository>")
+            .field("two_factor_service", &self.two_factor_service)
+            .finish()
+    }
+}
+
 impl Verify2FA {
     pub fn new(
         user_repository: Arc<dyn UserRepository>,
@@ -38,7 +47,7 @@ impl Verify2FA {
         enable_on_success: bool,
     ) -> anyhow::Result<bool> {
         // Get the user
-        let mut user = self
+        let user = self
             .user_repository
             .find_by_id(&user_id)
             .await?

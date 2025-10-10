@@ -16,6 +16,20 @@ pub struct RequestPasswordReset {
     base_url: String,
 }
 
+impl std::fmt::Debug for RequestPasswordReset {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("RequestPasswordReset")
+            .field("user_repository", &"Arc<dyn UserRepository>")
+            .field(
+                "password_reset_token_repository",
+                &"Arc<dyn PasswordResetTokenRepository>",
+            )
+            .field("email_service", &self.email_service)
+            .field("base_url", &self.base_url)
+            .finish()
+    }
+}
+
 impl RequestPasswordReset {
     pub fn new(
         user_repository: Arc<dyn UserRepository>,
@@ -39,12 +53,9 @@ impl RequestPasswordReset {
     /// Note: Always returns Ok(()) even if user doesn't exist (security best practice)
     pub async fn execute(&self, email: String) -> anyhow::Result<()> {
         // Find the user
-        let user = match self.user_repository.find_by_email(&email).await? {
-            Some(user) => user,
-            None => {
-                // Don't reveal that user doesn't exist (security best practice)
-                return Ok(());
-            }
+        let Some(user) = self.user_repository.find_by_email(&email).await? else {
+            // Don't reveal that user doesn't exist (security best practice)
+            return Ok(());
         };
 
         // Delete any existing reset tokens for this user

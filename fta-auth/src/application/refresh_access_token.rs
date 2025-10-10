@@ -2,16 +2,26 @@ use anyhow::Context;
 use fta_users::domain::UserRepository;
 use std::sync::Arc;
 
-use crate::{
-    domain::RefreshTokenRepository,
-    infrastructure::services::JwtService,
-};
+use crate::{domain::RefreshTokenRepository, infrastructure::services::JwtService};
 
 /// Use case for refreshing an access token
 pub struct RefreshAccessToken {
     user_repository: Arc<dyn UserRepository>,
     refresh_token_repository: Arc<dyn RefreshTokenRepository>,
     jwt_service: JwtService,
+}
+
+impl std::fmt::Debug for RefreshAccessToken {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("RefreshAccessToken")
+            .field("user_repository", &"Arc<dyn UserRepository>")
+            .field(
+                "refresh_token_repository",
+                &"Arc<dyn RefreshTokenRepository>",
+            )
+            .field("jwt_service", &"JwtService")
+            .finish()
+    }
 }
 
 impl RefreshAccessToken {

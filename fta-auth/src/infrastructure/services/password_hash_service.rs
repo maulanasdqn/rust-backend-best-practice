@@ -4,13 +4,13 @@ use argon2::{
 };
 
 /// Service for hashing and verifying passwords using Argon2id
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct PasswordHashService {
     argon2: Argon2<'static>,
 }
 
 impl PasswordHashService {
-    /// Creates a new PasswordHashService with default Argon2 configuration
+    /// Creates a new `PasswordHashService` with default Argon2 configuration
     pub fn new() -> Self {
         Self {
             argon2: Argon2::default(),
@@ -29,7 +29,7 @@ impl PasswordHashService {
         let password_hash = self
             .argon2
             .hash_password(password.as_bytes(), &salt)
-            .map_err(|e| anyhow::anyhow!("Failed to hash password: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to hash password: {e}"))?;
 
         Ok(password_hash.to_string())
     }
@@ -44,7 +44,7 @@ impl PasswordHashService {
     /// `true` if the password matches the hash, `false` otherwise
     pub fn verify_password(&self, password: &str, password_hash: &str) -> anyhow::Result<bool> {
         let parsed_hash = PasswordHash::new(password_hash)
-            .map_err(|e| anyhow::anyhow!("Failed to parse password hash: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to parse password hash: {e}"))?;
 
         match self
             .argon2

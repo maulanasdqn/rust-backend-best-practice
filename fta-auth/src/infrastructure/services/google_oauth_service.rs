@@ -1,7 +1,7 @@
 use serde::Deserialize;
 
-/// Service for Google OAuth authentication
-#[derive(Clone)]
+/// Service for Google `OAuth` authentication
+#[derive(Clone, Debug)]
 pub struct GoogleOAuthService {
     client_id: String,
     redirect_uri: String,
@@ -23,12 +23,12 @@ struct GoogleUserInfo {
 }
 
 impl GoogleOAuthService {
-    /// Creates a new GoogleOAuthService
+    /// Creates a new `GoogleOAuthService`
     ///
     /// # Arguments
-    /// * `client_id` - Google OAuth client ID
-    /// * `client_secret` - Google OAuth client secret
-    /// * `redirect_uri` - OAuth redirect URI (e.g., "http://localhost:8080/api/auth/google/callback")
+    /// * `client_id` - Google `OAuth` client ID
+    /// * `client_secret` - Google `OAuth` client secret
+    /// * `redirect_uri` - `OAuth` redirect URI (e.g., "<http://localhost:8080/api/auth/google/callback>")
     pub fn new(client_id: String, client_secret: String, redirect_uri: String) -> Self {
         Self {
             client_id,
@@ -38,7 +38,7 @@ impl GoogleOAuthService {
         }
     }
 
-    /// Generates the Google OAuth authorization URL
+    /// Generates the Google `OAuth` authorization URL
     ///
     /// This URL should be used to redirect the user to Google's consent screen
     ///
@@ -61,7 +61,7 @@ impl GoogleOAuthService {
     /// * `code` - The authorization code received from Google's callback
     ///
     /// # Returns
-    /// A tuple of (email, name, google_id)
+    /// A tuple of (email, name, `google_id`)
     pub async fn get_user_info(&self, code: &str) -> anyhow::Result<(String, String, String)> {
         // Step 1: Exchange authorization code for access token
         let token_response = self
@@ -76,17 +76,17 @@ impl GoogleOAuthService {
             ])
             .send()
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to exchange code for token: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to exchange code for token: {e}"))?;
 
         if !token_response.status().is_success() {
             let error_text = token_response.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("Token exchange failed: {}", error_text));
+            return Err(anyhow::anyhow!("Token exchange failed: {error_text}"));
         }
 
         let token_data: GoogleTokenResponse = token_response
             .json()
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to parse token response: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to parse token response: {e}"))?;
 
         // Step 2: Use access token to get user info
         let user_info_response = self
@@ -95,17 +95,17 @@ impl GoogleOAuthService {
             .bearer_auth(&token_data.access_token)
             .send()
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to fetch user info: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to fetch user info: {e}"))?;
 
         if !user_info_response.status().is_success() {
             let error_text = user_info_response.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!("User info fetch failed: {}", error_text));
+            return Err(anyhow::anyhow!("User info fetch failed: {error_text}"));
         }
 
         let user_info: GoogleUserInfo = user_info_response
             .json()
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to parse user info: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to parse user info: {e}"))?;
 
         let email = user_info.email;
         let name = user_info.name.unwrap_or_else(|| "Google User".to_string());
@@ -135,12 +135,12 @@ impl GoogleOAuthService {
             ])
             .send()
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to exchange code for token: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to exchange code for token: {e}"))?;
 
         let token_data: GoogleTokenResponse = token_response
             .json()
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to parse token response: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to parse token response: {e}"))?;
 
         // Fetch user info
         let user_info_response = self
@@ -149,12 +149,12 @@ impl GoogleOAuthService {
             .bearer_auth(&token_data.access_token)
             .send()
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to fetch user info: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to fetch user info: {e}"))?;
 
         let user_info: GoogleUserInfo = user_info_response
             .json()
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to parse user info: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to parse user info: {e}"))?;
 
         Ok(user_info.verified_email.unwrap_or(false))
     }
@@ -182,7 +182,7 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore] // Requires valid Google OAuth credentials and authorization code
+    #[ignore = "Requires Google OAuth credentials"]
     async fn test_get_user_info() {
         let service = GoogleOAuthService::new(
             "test_client_id".to_string(),

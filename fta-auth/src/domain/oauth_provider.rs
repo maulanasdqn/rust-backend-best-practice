@@ -7,7 +7,7 @@ pub enum OAuthProvider {
 }
 
 impl OAuthProvider {
-    pub fn as_str(&self) -> &str {
+    pub const fn as_str(&self) -> &str {
         match self {
             Self::Google => "google",
         }
@@ -26,7 +26,7 @@ impl TryFrom<String> for OAuthProvider {
     fn try_from(value: String) -> Result<Self, Self::Error> {
         match value.to_lowercase().as_str() {
             "google" => Ok(Self::Google),
-            _ => Err(anyhow::anyhow!("Unknown OAuth provider: {}", value)),
+            _ => Err(anyhow::anyhow!("Unknown OAuth provider: {value}")),
         }
     }
 }

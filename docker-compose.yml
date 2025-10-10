@@ -1,0 +1,62 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: financial-tracker-db
+    ports:
+      - "7778:5432"
+    environment:
+      POSTGRES_DB: financial_tracker
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d financial_tracker"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - financial-tracker-network
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: financial-tracker-api
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/financial_tracker
+      RUST_LOG: ${RUST_LOG:-info,sqlx=warn,tower_http=debug,axum=debug,fta_server=debug}
+      LOG_FORMAT: ${LOG_FORMAT:-pretty}
+      LOG_TO_FILE: ${LOG_TO_FILE:-false}
+      BASE_URL: ${BASE_URL:-http://localhost:3000}
+      APP_NAME: ${APP_NAME:-Financial Tracker}
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-here-change-in-production}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-noreply@yourdomain.com}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-Financial Tracker}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-http://localhost:3000/api/v1/auth/google/callback}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - financial-tracker-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  financial-tracker-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/16

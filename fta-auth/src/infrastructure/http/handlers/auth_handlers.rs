@@ -1,14 +1,26 @@
 use axum::{extract::State, http::StatusCode, Json};
 use fta_validation::Validated;
 use std::sync::Arc;
-use uuid::Uuid;
 
 use crate::{
-    application::*,
-    domain::*,
+    application::{
+        change_password, disable_2fa, enable_2fa, google_oauth_callback, google_oauth_login, login,
+        logout, logout_all, refresh_access_token, register_user, request_password_reset,
+        reset_password, verify_2fa, verify_email,
+    },
+    domain::{EmailVerificationRepository, PasswordResetTokenRepository, RefreshTokenRepository},
     infrastructure::{
-        http::dto::*,
-        services::*,
+        http::dto::{
+            ChangePasswordRequest, Disable2FARequest, Enable2FAResponse,
+            GoogleOAuthCallbackRequest, GoogleOAuthCallbackResponse, LoginRequest, LoginResponse,
+            LogoutRequest, MessageResponse, RefreshTokenRequest, RefreshTokenResponse,
+            RegisterRequest, RegisterResponse, RequestPasswordResetRequest, ResetPasswordRequest,
+            Verify2FARequest, VerifyEmailRequest,
+        },
+        services::{
+            EmailService, GoogleOAuthService, JwtService, OtpService, PasswordHashService,
+            TwoFactorService,
+        },
     },
 };
 
@@ -31,6 +43,33 @@ pub struct AuthAppState {
 
     // Configuration
     pub base_url: String,
+}
+
+impl std::fmt::Debug for AuthAppState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AuthAppState")
+            .field("user_repository", &"Arc<dyn UserRepository>")
+            .field(
+                "refresh_token_repository",
+                &"Arc<dyn RefreshTokenRepository>",
+            )
+            .field(
+                "email_verification_repository",
+                &"Arc<dyn EmailVerificationRepository>",
+            )
+            .field(
+                "password_reset_token_repository",
+                &"Arc<dyn PasswordResetTokenRepository>",
+            )
+            .field("password_hash_service", &self.password_hash_service)
+            .field("jwt_service", &self.jwt_service)
+            .field("email_service", &self.email_service)
+            .field("google_oauth_service", &self.google_oauth_service)
+            .field("two_factor_service", &self.two_factor_service)
+            .field("otp_service", &self.otp_service)
+            .field("base_url", &self.base_url)
+            .finish()
+    }
 }
 
 // ============================================================================
@@ -233,7 +272,9 @@ pub async fn logout_handler(
 )]
 pub async fn logout_all_handler(
     State(state): State<Arc<AuthAppState>>,
-    axum::extract::Extension(auth_user): axum::extract::Extension<crate::infrastructure::http::middleware::AuthUser>,
+    axum::extract::Extension(auth_user): axum::extract::Extension<
+        crate::infrastructure::http::middleware::AuthUser,
+    >,
 ) -> Result<Json<MessageResponse>, (StatusCode, Json<MessageResponse>)> {
     let use_case = logout_all::LogoutAll::new(Arc::clone(&state.refresh_token_repository));
 
@@ -333,7 +374,9 @@ pub async fn reset_password_handler(
 )]
 pub async fn change_password_handler(
     State(state): State<Arc<AuthAppState>>,
-    axum::extract::Extension(auth_user): axum::extract::Extension<crate::infrastructure::http::middleware::AuthUser>,
+    axum::extract::Extension(auth_user): axum::extract::Extension<
+        crate::infrastructure::http::middleware::AuthUser,
+    >,
     Validated(req): Validated<ChangePasswordRequest>,
 ) -> Result<Json<MessageResponse>, (StatusCode, Json<MessageResponse>)> {
     let use_case = change_password::ChangePassword::new(
@@ -369,7 +412,9 @@ pub async fn change_password_handler(
 )]
 pub async fn enable_2fa_handler(
     State(state): State<Arc<AuthAppState>>,
-    axum::extract::Extension(auth_user): axum::extract::Extension<crate::infrastructure::http::middleware::AuthUser>,
+    axum::extract::Extension(auth_user): axum::extract::Extension<
+        crate::infrastructure::http::middleware::AuthUser,
+    >,
 ) -> Result<Json<Enable2FAResponse>, (StatusCode, Json<MessageResponse>)> {
     let use_case = enable_2fa::Enable2FA::new(
         Arc::clone(&state.user_repository),
@@ -407,7 +452,9 @@ pub async fn enable_2fa_handler(
 )]
 pub async fn verify_2fa_handler(
     State(state): State<Arc<AuthAppState>>,
-    axum::extract::Extension(auth_user): axum::extract::Extension<crate::infrastructure::http::middleware::AuthUser>,
+    axum::extract::Extension(auth_user): axum::extract::Extension<
+        crate::infrastructure::http::middleware::AuthUser,
+    >,
     Validated(req): Validated<Verify2FARequest>,
 ) -> Result<Json<MessageResponse>, (StatusCode, Json<MessageResponse>)> {
     let use_case = verify_2fa::Verify2FA::new(
@@ -428,7 +475,7 @@ pub async fn verify_2fa_handler(
                     Json(MessageResponse::new("Invalid 2FA code")),
                 ))
             }
-        }
+        },
         Err(e) => Err((
             StatusCode::BAD_REQUEST,
             Json(MessageResponse::new(e.to_string())),
@@ -454,7 +501,9 @@ pub async fn verify_2fa_handler(
 )]
 pub async fn disable_2fa_handler(
     State(state): State<Arc<AuthAppState>>,
-    axum::extract::Extension(auth_user): axum::extract::Extension<crate::infrastructure::http::middleware::AuthUser>,
+    axum::extract::Extension(auth_user): axum::extract::Extension<
+        crate::infrastructure::http::middleware::AuthUser,
+    >,
     Validated(req): Validated<Disable2FARequest>,
 ) -> Result<Json<MessageResponse>, (StatusCode, Json<MessageResponse>)> {
     let use_case = disable_2fa::Disable2FA::new(
@@ -463,7 +512,10 @@ pub async fn disable_2fa_handler(
         state.password_hash_service.clone(),
     );
 
-    match use_case.execute(auth_user.user_id, req.password, req.code).await {
+    match use_case
+        .execute(auth_user.user_id, req.password, req.code)
+        .await
+    {
         Ok(()) => Ok(Json(MessageResponse::new("2FA disabled successfully"))),
         Err(e) => Err((
             StatusCode::BAD_REQUEST,

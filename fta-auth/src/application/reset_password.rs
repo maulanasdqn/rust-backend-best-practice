@@ -2,16 +2,26 @@ use anyhow::Context;
 use fta_users::domain::UserRepository;
 use std::sync::Arc;
 
-use crate::{
-    domain::PasswordResetTokenRepository,
-    infrastructure::services::PasswordHashService,
-};
+use crate::{domain::PasswordResetTokenRepository, infrastructure::services::PasswordHashService};
 
 /// Use case for resetting a password with a reset token
 pub struct ResetPassword {
     user_repository: Arc<dyn UserRepository>,
     password_reset_token_repository: Arc<dyn PasswordResetTokenRepository>,
     password_hash_service: PasswordHashService,
+}
+
+impl std::fmt::Debug for ResetPassword {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ResetPassword")
+            .field("user_repository", &"Arc<dyn UserRepository>")
+            .field(
+                "password_reset_token_repository",
+                &"Arc<dyn PasswordResetTokenRepository>",
+            )
+            .field("password_hash_service", &self.password_hash_service)
+            .finish()
+    }
 }
 
 impl ResetPassword {

@@ -4,14 +4,14 @@ use uuid::Uuid;
 
 use crate::domain::{RefreshToken, RefreshTokenRepository};
 
-/// Postgres implementation of RefreshTokenRepository
-#[derive(Clone)]
+/// Postgres implementation of `RefreshTokenRepository`
+#[derive(Clone, Debug)]
 pub struct PostgresRefreshTokenRepository {
     pool: PgPool,
 }
 
 impl PostgresRefreshTokenRepository {
-    pub fn new(pool: PgPool) -> Self {
+    pub const fn new(pool: PgPool) -> Self {
         Self { pool }
     }
 }
@@ -129,20 +129,17 @@ impl RefreshTokenRepository for PostgresRefreshTokenRepository {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use chrono::Utc;
-
     // Note: These tests require a test database
     // You would typically use sqlx::test macro for integration tests
 
-    #[ignore]
+    #[ignore = "Requires test database"]
     #[tokio::test]
     async fn test_create_and_find_refresh_token() {
         // This test requires a real database connection
         // Implement when you have test database setup
     }
 
-    #[ignore]
+    #[ignore = "Requires test database"]
     #[tokio::test]
     async fn test_delete_expired_tokens() {
         // This test requires a real database connection

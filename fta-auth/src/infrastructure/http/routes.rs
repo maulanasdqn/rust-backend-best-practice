@@ -5,7 +5,16 @@ use axum::{
 };
 use std::sync::Arc;
 
-use super::{handlers::*, middleware::{require_auth, AuthMiddlewareState}};
+use super::{
+    handlers::{
+        change_password_handler, disable_2fa_handler, enable_2fa_handler,
+        google_oauth_callback_handler, google_oauth_login_handler, login_handler,
+        logout_all_handler, logout_handler, refresh_token_handler, register_handler,
+        request_password_reset_handler, reset_password_handler, verify_2fa_handler,
+        verify_email_handler, AuthAppState,
+    },
+    middleware::{require_auth, AuthMiddlewareState},
+};
 
 /// Creates the authentication routes
 ///
@@ -22,8 +31,8 @@ use super::{handlers::*, middleware::{require_auth, AuthMiddlewareState}};
 /// - POST /2fa/enable - Enable 2FA (requires auth)
 /// - POST /2fa/verify - Verify 2FA code (requires auth)
 /// - POST /2fa/disable - Disable 2FA (requires auth)
-/// - GET /google/login - Get Google OAuth URL
-/// - POST /google/callback - Handle Google OAuth callback
+/// - GET /google/login - Get Google `OAuth` URL
+/// - POST /google/callback - Handle Google `OAuth` callback
 pub fn auth_routes(state: Arc<AuthAppState>) -> Router {
     // Create auth middleware state
     let auth_middleware_state = Arc::new(AuthMiddlewareState {
@@ -37,7 +46,10 @@ pub fn auth_routes(state: Arc<AuthAppState>) -> Router {
         .route("/login", post(login_handler))
         .route("/refresh", post(refresh_token_handler))
         .route("/logout", post(logout_handler))
-        .route("/password-reset/request", post(request_password_reset_handler))
+        .route(
+            "/password-reset/request",
+            post(request_password_reset_handler),
+        )
         .route("/password-reset/reset", post(reset_password_handler))
         .route("/google/login", get(google_oauth_login_handler))
         .route("/google/callback", post(google_oauth_callback_handler))

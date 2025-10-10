@@ -12,6 +12,16 @@ pub struct Disable2FA {
     password_hash_service: PasswordHashService,
 }
 
+impl std::fmt::Debug for Disable2FA {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Disable2FA")
+            .field("user_repository", &"Arc<dyn UserRepository>")
+            .field("two_factor_service", &self.two_factor_service)
+            .field("password_hash_service", &self.password_hash_service)
+            .finish()
+    }
+}
+
 impl Disable2FA {
     pub fn new(
         user_repository: Arc<dyn UserRepository>,
@@ -38,7 +48,7 @@ impl Disable2FA {
         code: String,
     ) -> anyhow::Result<()> {
         // Get the user
-        let mut user = self
+        let user = self
             .user_repository
             .find_by_id(&user_id)
             .await?

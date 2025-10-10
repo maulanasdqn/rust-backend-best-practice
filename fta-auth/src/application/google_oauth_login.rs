@@ -1,18 +1,19 @@
 use crate::infrastructure::services::GoogleOAuthService;
 
-/// Use case for initiating Google OAuth login
+/// Use case for initiating Google `OAuth` login
+#[derive(Debug)]
 pub struct GoogleOAuthLogin {
     google_oauth_service: GoogleOAuthService,
 }
 
 impl GoogleOAuthLogin {
-    pub fn new(google_oauth_service: GoogleOAuthService) -> Self {
+    pub const fn new(google_oauth_service: GoogleOAuthService) -> Self {
         Self {
             google_oauth_service,
         }
     }
 
-    /// Generates the Google OAuth authorization URL
+    /// Generates the Google `OAuth` authorization URL
     ///
     /// The user should be redirected to this URL to authenticate with Google
     ///

@@ -4,14 +4,14 @@ use uuid::Uuid;
 
 use crate::domain::{EmailVerification, EmailVerificationRepository};
 
-/// Postgres implementation of EmailVerificationRepository
-#[derive(Clone)]
+/// Postgres implementation of `EmailVerificationRepository`
+#[derive(Clone, Debug)]
 pub struct PostgresEmailVerificationRepository {
     pool: PgPool,
 }
 
 impl PostgresEmailVerificationRepository {
-    pub fn new(pool: PgPool) -> Self {
+    pub const fn new(pool: PgPool) -> Self {
         Self { pool }
     }
 }
@@ -38,10 +38,7 @@ impl EmailVerificationRepository for PostgresEmailVerificationRepository {
         Ok(result)
     }
 
-    async fn find_by_user_id(
-        &self,
-        user_id: &Uuid,
-    ) -> anyhow::Result<Option<EmailVerification>> {
+    async fn find_by_user_id(&self, user_id: &Uuid) -> anyhow::Result<Option<EmailVerification>> {
         let result = sqlx::query_as!(
             EmailVerification,
             r#"
@@ -103,19 +100,17 @@ impl EmailVerificationRepository for PostgresEmailVerificationRepository {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     // Note: These tests require a test database
     // You would typically use sqlx::test macro for integration tests
 
-    #[ignore]
+    #[ignore = "Requires test database"]
     #[tokio::test]
     async fn test_create_and_find_email_verification() {
         // This test requires a real database connection
         // Implement when you have test database setup
     }
 
-    #[ignore]
+    #[ignore = "Requires test database"]
     #[tokio::test]
     async fn test_delete_expired_verifications() {
         // This test requires a real database connection

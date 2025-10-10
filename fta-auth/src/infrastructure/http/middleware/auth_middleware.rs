@@ -2,7 +2,7 @@ use axum::{
     extract::{Request, State},
     http::{header, StatusCode},
     middleware::Next,
-    response::{IntoResponse, Response},
+    response::Response,
     Json,
 };
 use std::sync::Arc;
@@ -10,6 +10,7 @@ use std::sync::Arc;
 use crate::infrastructure::{http::dto::MessageResponse, services::JwtService};
 
 /// Extension key for authenticated user ID
+#[derive(Debug)]
 pub struct AuthUser {
     pub user_id: uuid::Uuid,
     pub email: String,
@@ -19,6 +20,14 @@ pub struct AuthUser {
 #[derive(Clone)]
 pub struct AuthMiddlewareState {
     pub jwt_service: JwtService,
+}
+
+impl std::fmt::Debug for AuthMiddlewareState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AuthMiddlewareState")
+            .field("jwt_service", &self.jwt_service)
+            .finish()
+    }
 }
 
 /// Middleware that requires authentication
@@ -33,15 +42,12 @@ pub async fn require_auth(
     let token = extract_token_from_header(&request)?;
 
     // Verify token
-    let claims = state
-        .jwt_service
-        .verify_token(token)
-        .map_err(|e| {
-            (
-                StatusCode::UNAUTHORIZED,
-                Json(MessageResponse::new(format!("Invalid token: {}", e))),
-            )
-        })?;
+    let claims = state.jwt_service.verify_token(token).map_err(|e| {
+        (
+            StatusCode::UNAUTHORIZED,
+            Json(MessageResponse::new(format!("Invalid token: {e}"))),
+        )
+    })?;
 
     // Ensure it's an access token
     if !claims.is_access_token() {
@@ -145,7 +151,7 @@ impl axum::extract::FromRequestParts<Arc<AuthMiddlewareState>> for AuthUser {
         parts: &mut axum::http::request::Parts,
         _state: &Arc<AuthMiddlewareState>,
     ) -> Result<Self, Self::Rejection> {
-        parts.extensions.get::<AuthUser>().cloned().ok_or_else(|| {
+        parts.extensions.get::<Self>().cloned().ok_or_else(|| {
             (
                 StatusCode::UNAUTHORIZED,
                 Json(MessageResponse::new("Unauthorized")),
@@ -166,8 +172,6 @@ impl Clone for AuthUser {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     fn test_extract_bearer_token() {
         // This would require creating a full Request object

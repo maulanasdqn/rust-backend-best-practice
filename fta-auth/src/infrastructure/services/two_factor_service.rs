@@ -1,20 +1,20 @@
 use base32::Alphabet;
-use qrcode::{QrCode, render::svg};
+use qrcode::{render::svg, QrCode};
 use rand::Rng;
 use totp_rs::{Algorithm, TOTP};
 
 /// Service for Two-Factor Authentication using TOTP
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct TwoFactorService {
     issuer: String,
 }
 
 impl TwoFactorService {
-    /// Creates a new TwoFactorService
+    /// Creates a new `TwoFactorService`
     ///
     /// # Arguments
     /// * `issuer` - The name of your application (e.g., "Financial Tracker")
-    pub fn new(issuer: String) -> Self {
+    pub const fn new(issuer: String) -> Self {
         Self { issuer }
     }
 
@@ -43,7 +43,7 @@ impl TwoFactorService {
         let otpauth_url = self.get_provisioning_uri(email, secret)?;
 
         let qr_code = QrCode::new(otpauth_url.as_bytes())
-            .map_err(|e| anyhow::anyhow!("Failed to generate QR code: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to generate QR code: {e}"))?;
 
         let svg = qr_code
             .render::<svg::Color>()
@@ -64,7 +64,7 @@ impl TwoFactorService {
     /// # Returns
     /// true if the code is valid, false otherwise
     pub fn verify_code(&self, email: &str, secret: &str, code: &str) -> anyhow::Result<bool> {
-        let totp = self.create_totp(email, secret)?;
+        let totp = Self::create_totp(email, secret)?;
 
         Ok(totp.check_current(code).unwrap_or(false))
     }
@@ -79,8 +79,9 @@ impl TwoFactorService {
     /// # Returns
     /// The current 6-digit TOTP code
     pub fn generate_current_code(&self, email: &str, secret: &str) -> anyhow::Result<String> {
-        let totp = self.create_totp(email, secret)?;
-        Ok(totp.generate_current().map_err(|e| anyhow::anyhow!("Failed to generate code: {}", e))?)
+        let totp = Self::create_totp(email, secret)?;
+        totp.generate_current()
+            .map_err(|e| anyhow::anyhow!("Failed to generate code: {e}"))
     }
 
     /// Gets the provisioning URI for manual entry
@@ -104,19 +105,19 @@ impl TwoFactorService {
     }
 
     /// Creates a TOTP instance from email and secret
-    fn create_totp(&self, email: &str, secret: &str) -> anyhow::Result<TOTP> {
+    fn create_totp(_email: &str, secret: &str) -> anyhow::Result<TOTP> {
         // Decode the base32 secret
         let secret_bytes = base32::decode(Alphabet::Rfc4648 { padding: false }, secret)
             .ok_or_else(|| anyhow::anyhow!("Failed to decode secret"))?;
 
         TOTP::new(
             Algorithm::SHA1,
-            6,          // 6 digits
-            1,          // 1 step skew
-            30,         // 30 second time step
+            6,  // 6 digits
+            1,  // 1 step skew
+            30, // 30 second time step
             secret_bytes,
         )
-        .map_err(|e| anyhow::anyhow!("Failed to create TOTP: {}", e))
+        .map_err(|e| anyhow::anyhow!("Failed to create TOTP: {e}"))
     }
 }
 
@@ -139,7 +140,9 @@ mod tests {
         let service = TwoFactorService::new("Test App".to_string());
         let secret = service.generate_secret();
 
-        let qr_code = service.generate_qr_code("test@example.com", &secret).unwrap();
+        let qr_code = service
+            .generate_qr_code("test@example.com", &secret)
+            .unwrap();
 
         // QR code should be an SVG
         assert!(qr_code.contains("<svg"));
@@ -165,7 +168,9 @@ mod tests {
         let service = TwoFactorService::new("Test App".to_string());
         let secret = service.generate_secret();
 
-        let is_valid = service.verify_code("test@example.com", &secret, "000000").unwrap();
+        let is_valid = service
+            .verify_code("test@example.com", &secret, "000000")
+            .unwrap();
         assert!(!is_valid);
     }
 
@@ -174,7 +179,9 @@ mod tests {
         let service = TwoFactorService::new("Test App".to_string());
         let secret = service.generate_secret();
 
-        let uri = service.get_provisioning_uri("test@example.com", &secret).unwrap();
+        let uri = service
+            .get_provisioning_uri("test@example.com", &secret)
+            .unwrap();
 
         assert!(uri.starts_with("otpauth://totp/"));
         assert!(uri.contains("test@example.com"));

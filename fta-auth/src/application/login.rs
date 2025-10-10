@@ -8,6 +8,7 @@ use crate::{
 };
 
 /// Response from successful login use case
+#[derive(Debug)]
 pub struct LoginResult {
     pub access_token: String,
     pub refresh_token: String,
@@ -20,6 +21,20 @@ pub struct Login {
     refresh_token_repository: Arc<dyn RefreshTokenRepository>,
     password_hash_service: PasswordHashService,
     jwt_service: JwtService,
+}
+
+impl std::fmt::Debug for Login {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Login")
+            .field("user_repository", &"Arc<dyn UserRepository>")
+            .field(
+                "refresh_token_repository",
+                &"Arc<dyn RefreshTokenRepository>",
+            )
+            .field("password_hash_service", &self.password_hash_service)
+            .field("jwt_service", &"JwtService")
+            .finish()
+    }
 }
 
 impl Login {
@@ -44,10 +59,10 @@ impl Login {
     /// * `password` - User's plain text password
     ///
     /// # Returns
-    /// LoginResult containing access token, refresh token, and 2FA status
+    /// `LoginResult` containing access token, refresh token, and 2FA status
     pub async fn execute(&self, email: String, password: String) -> anyhow::Result<LoginResult> {
         // Find the user
-        let mut user = self
+        let user = self
             .user_repository
             .find_by_email(&email)
             .await?

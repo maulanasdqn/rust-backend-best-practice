@@ -4,14 +4,14 @@ use uuid::Uuid;
 
 use crate::domain::{PasswordResetToken, PasswordResetTokenRepository};
 
-/// Postgres implementation of PasswordResetTokenRepository
-#[derive(Clone)]
+/// Postgres implementation of `PasswordResetTokenRepository`
+#[derive(Clone, Debug)]
 pub struct PostgresPasswordResetTokenRepository {
     pool: PgPool,
 }
 
 impl PostgresPasswordResetTokenRepository {
-    pub fn new(pool: PgPool) -> Self {
+    pub const fn new(pool: PgPool) -> Self {
         Self { pool }
     }
 }
@@ -135,26 +135,24 @@ impl PasswordResetTokenRepository for PostgresPasswordResetTokenRepository {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     // Note: These tests require a test database
     // You would typically use sqlx::test macro for integration tests
 
-    #[ignore]
+    #[ignore = "Requires test database"]
     #[tokio::test]
     async fn test_create_and_find_password_reset_token() {
         // This test requires a real database connection
         // Implement when you have test database setup
     }
 
-    #[ignore]
+    #[ignore = "Requires test database"]
     #[tokio::test]
     async fn test_mark_token_as_used() {
         // This test requires a real database connection
         // Implement when you have test database setup
     }
 
-    #[ignore]
+    #[ignore = "Requires test database"]
     #[tokio::test]
     async fn test_delete_expired_tokens() {
         // This test requires a real database connection

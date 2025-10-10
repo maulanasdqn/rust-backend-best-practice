@@ -11,6 +11,15 @@ pub struct ChangePassword {
     password_hash_service: PasswordHashService,
 }
 
+impl std::fmt::Debug for ChangePassword {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ChangePassword")
+            .field("user_repository", &"Arc<dyn UserRepository>")
+            .field("password_hash_service", &self.password_hash_service)
+            .finish()
+    }
+}
+
 impl ChangePassword {
     pub fn new(
         user_repository: Arc<dyn UserRepository>,

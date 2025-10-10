@@ -8,6 +8,17 @@ pub struct Logout {
     refresh_token_repository: Arc<dyn RefreshTokenRepository>,
 }
 
+impl std::fmt::Debug for Logout {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Logout")
+            .field(
+                "refresh_token_repository",
+                &"Arc<dyn RefreshTokenRepository>",
+            )
+            .finish()
+    }
+}
+
 impl Logout {
     pub fn new(refresh_token_repository: Arc<dyn RefreshTokenRepository>) -> Self {
         Self {

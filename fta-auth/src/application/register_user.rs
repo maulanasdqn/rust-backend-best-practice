@@ -17,6 +17,21 @@ pub struct RegisterUser {
     email_service: EmailService,
 }
 
+impl std::fmt::Debug for RegisterUser {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("RegisterUser")
+            .field("user_repository", &"Arc<dyn UserRepository>")
+            .field(
+                "email_verification_repository",
+                &"Arc<dyn EmailVerificationRepository>",
+            )
+            .field("password_hash_service", &self.password_hash_service)
+            .field("otp_service", &self.otp_service)
+            .field("email_service", &self.email_service)
+            .finish()
+    }
+}
+
 impl RegisterUser {
     pub fn new(
         user_repository: Arc<dyn UserRepository>,
@@ -63,7 +78,12 @@ impl RegisterUser {
             .context("Failed to hash password")?;
 
         // Create the user
-        let user = User::new(email.clone(), password_hash, first_name.clone(), last_name.clone());
+        let user = User::new(
+            email.clone(),
+            password_hash,
+            first_name.clone(),
+            last_name.clone(),
+        );
         let created_user = self
             .user_repository
             .create(user)

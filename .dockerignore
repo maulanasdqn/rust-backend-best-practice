@@ -1,0 +1,59 @@
+# Build artifacts
+target/
+*.o
+*.so
+*.dylib
+*.dll
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Environment files
+.env
+.env.local
+.env.production
+!.env.example
+
+# Documentation (except README)
+*.md
+!README.md
+
+# Logs
+*.log
+logs/
+
+# Docker files (to avoid recursion)
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+
+# Development configuration
+.cargo/
+.config/
+.claude/
+
+# Test artifacts
+coverage/
+*.profraw
+*.profdata

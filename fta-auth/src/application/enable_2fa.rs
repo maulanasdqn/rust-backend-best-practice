@@ -5,7 +5,8 @@ use uuid::Uuid;
 
 use crate::infrastructure::services::TwoFactorService;
 
-/// Response from Enable2FA use case
+/// Response from `Enable2FA` use case
+#[derive(Debug)]
 pub struct Enable2FAResult {
     pub secret: String,
     pub qr_code_svg: String,
@@ -16,6 +17,15 @@ pub struct Enable2FAResult {
 pub struct Enable2FA {
     user_repository: Arc<dyn UserRepository>,
     two_factor_service: TwoFactorService,
+}
+
+impl std::fmt::Debug for Enable2FA {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Enable2FA")
+            .field("user_repository", &"Arc<dyn UserRepository>")
+            .field("two_factor_service", &self.two_factor_service)
+            .finish()
+    }
 }
 
 impl Enable2FA {
@@ -35,10 +45,10 @@ impl Enable2FA {
     /// * `user_id` - The user's ID
     ///
     /// # Returns
-    /// Enable2FAResult containing the secret, QR code, and provisioning URI
+    /// `Enable2FAResult` containing the secret, QR code, and provisioning URI
     pub async fn execute(&self, user_id: Uuid) -> anyhow::Result<Enable2FAResult> {
         // Get the user
-        let mut user = self
+        let user = self
             .user_repository
             .find_by_id(&user_id)
             .await?

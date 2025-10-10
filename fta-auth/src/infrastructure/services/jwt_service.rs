@@ -13,15 +13,32 @@ pub struct JwtService {
     refresh_token_expiry_minutes: i64,
 }
 
+impl std::fmt::Debug for JwtService {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("JwtService")
+            .field("encoding_key", &"<secret>")
+            .field("decoding_key", &"<secret>")
+            .field(
+                "access_token_expiry_minutes",
+                &self.access_token_expiry_minutes,
+            )
+            .field(
+                "refresh_token_expiry_minutes",
+                &self.refresh_token_expiry_minutes,
+            )
+            .finish()
+    }
+}
+
 impl JwtService {
-    /// Creates a new JwtService with the provided secret and expiry settings
+    /// Creates a new `JwtService` with the provided secret and expiry settings
     ///
     /// # Arguments
     /// * `jwt_secret` - The secret key used for signing tokens
     /// * `access_token_expiry_minutes` - Expiry time for access tokens (default: 15 minutes)
     /// * `refresh_token_expiry_minutes` - Expiry time for refresh tokens (default: 10080 minutes = 7 days)
     pub fn new(
-        jwt_secret: String,
+        jwt_secret: &str,
         access_token_expiry_minutes: Option<i64>,
         refresh_token_expiry_minutes: Option<i64>,
     ) -> Self {
@@ -48,7 +65,7 @@ impl JwtService {
         let claims = Claims::new_access_token(user_id, email, exp);
 
         let token = encode(&Header::default(), &claims, &self.encoding_key)
-            .map_err(|e| anyhow::anyhow!("Failed to generate access token: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to generate access token: {e}"))?;
 
         Ok(token)
     }
@@ -60,7 +77,7 @@ impl JwtService {
     /// * `email` - The user's email address
     ///
     /// # Returns
-    /// A tuple of (signed JWT refresh token as a string, expiration DateTime)
+    /// A tuple of (signed JWT refresh token as a string, expiration `DateTime`)
     pub fn generate_refresh_token(
         &self,
         user_id: Uuid,
@@ -73,7 +90,7 @@ impl JwtService {
         let claims = Claims::new_refresh_token(user_id, email, exp);
 
         let token = encode(&Header::default(), &claims, &self.encoding_key)
-            .map_err(|e| anyhow::anyhow!("Failed to generate refresh token: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to generate refresh token: {e}"))?;
 
         Ok((token, expires_at))
     }
@@ -87,7 +104,7 @@ impl JwtService {
     /// The decoded Claims if the token is valid
     pub fn verify_token(&self, token: &str) -> anyhow::Result<Claims> {
         let token_data = decode::<Claims>(token, &self.decoding_key, &Validation::default())
-            .map_err(|e| anyhow::anyhow!("Failed to verify token: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to verify token: {e}"))?;
 
         let claims = token_data.claims;
 
@@ -113,7 +130,7 @@ impl JwtService {
         validation.validate_exp = false;
 
         let token_data = decode::<Claims>(token, &self.decoding_key, &validation)
-            .map_err(|e| anyhow::anyhow!("Failed to decode token: {}", e))?;
+            .map_err(|e| anyhow::anyhow!("Failed to decode token: {e}"))?;
 
         Ok(token_data.claims)
     }
@@ -138,11 +155,13 @@ mod tests {
 
     #[test]
     fn test_generate_and_verify_access_token() {
-        let service = JwtService::new("test_secret".to_string(), Some(15), Some(10080));
+        let service = JwtService::new("test_secret", Some(15), Some(10080));
         let user_id = Uuid::new_v4();
         let email = "test@example.com".to_string();
 
-        let token = service.generate_access_token(user_id, email.clone()).unwrap();
+        let token = service
+            .generate_access_token(user_id, email.clone())
+            .unwrap();
         let claims = service.verify_token(&token).unwrap();
 
         assert_eq!(claims.sub, user_id);
@@ -152,11 +171,13 @@ mod tests {
 
     #[test]
     fn test_generate_and_verify_refresh_token() {
-        let service = JwtService::new("test_secret".to_string(), Some(15), Some(10080));
+        let service = JwtService::new("test_secret", Some(15), Some(10080));
         let user_id = Uuid::new_v4();
         let email = "test@example.com".to_string();
 
-        let (token, _expires_at) = service.generate_refresh_token(user_id, email.clone()).unwrap();
+        let (token, _expires_at) = service
+            .generate_refresh_token(user_id, email.clone())
+            .unwrap();
         let claims = service.verify_token(&token).unwrap();
 
         assert_eq!(claims.sub, user_id);
@@ -166,7 +187,7 @@ mod tests {
 
     #[test]
     fn test_extract_user_id() {
-        let service = JwtService::new("test_secret".to_string(), Some(15), Some(10080));
+        let service = JwtService::new("test_secret", Some(15), Some(10080));
         let user_id = Uuid::new_v4();
         let email = "test@example.com".to_string();
 
@@ -178,7 +199,7 @@ mod tests {
 
     #[test]
     fn test_verify_invalid_token() {
-        let service = JwtService::new("test_secret".to_string(), Some(15), Some(10080));
+        let service = JwtService::new("test_secret", Some(15), Some(10080));
         let result = service.verify_token("invalid_token");
 
         assert!(result.is_err());
@@ -186,8 +207,8 @@ mod tests {
 
     #[test]
     fn test_different_secrets_fail_verification() {
-        let service1 = JwtService::new("secret1".to_string(), Some(15), Some(10080));
-        let service2 = JwtService::new("secret2".to_string(), Some(15), Some(10080));
+        let service1 = JwtService::new("secret1", Some(15), Some(10080));
+        let service2 = JwtService::new("secret2", Some(15), Some(10080));
 
         let user_id = Uuid::new_v4();
         let email = "test@example.com".to_string();

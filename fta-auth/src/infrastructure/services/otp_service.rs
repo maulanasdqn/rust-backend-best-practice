@@ -1,12 +1,12 @@
 use rand::Rng;
 
 /// Service for generating One-Time Passwords (OTP)
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Debug)]
 pub struct OtpService;
 
 impl OtpService {
-    /// Creates a new OtpService
-    pub fn new() -> Self {
+    /// Creates a new `OtpService`
+    pub const fn new() -> Self {
         Self
     }
 
@@ -16,8 +16,8 @@ impl OtpService {
     /// A string containing a 6-digit numeric code
     pub fn generate_code(&self) -> String {
         let mut rng = rand::rng();
-        let code = rng.random_range(100000..=999999);
-        format!("{:06}", code)
+        let code = rng.random_range(100_000..=999_999);
+        format!("{code:06}")
     }
 
     /// Validates an OTP code format
@@ -69,7 +69,7 @@ mod tests {
 
         // Should be within valid range
         let code_num: u32 = code.parse().unwrap();
-        assert!(code_num >= 100000 && code_num <= 999999);
+        assert!((100_000..=999_999).contains(&code_num));
     }
 
     #[test]

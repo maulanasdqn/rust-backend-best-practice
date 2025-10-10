@@ -11,6 +11,18 @@ pub struct VerifyEmail {
     email_verification_repository: Arc<dyn EmailVerificationRepository>,
 }
 
+impl std::fmt::Debug for VerifyEmail {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("VerifyEmail")
+            .field("user_repository", &"Arc<dyn UserRepository>")
+            .field(
+                "email_verification_repository",
+                &"Arc<dyn EmailVerificationRepository>",
+            )
+            .finish()
+    }
+}
+
 impl VerifyEmail {
     pub fn new(
         user_repository: Arc<dyn UserRepository>,
@@ -32,7 +44,7 @@ impl VerifyEmail {
     /// Success if verification is valid
     pub async fn execute(&self, user_id: Uuid, otp_code: String) -> anyhow::Result<()> {
         // Find the user
-        let mut user = self
+        let user = self
             .user_repository
             .find_by_id(&user_id)
             .await?
