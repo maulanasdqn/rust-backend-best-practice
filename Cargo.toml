@@ -81,6 +81,9 @@ urlencoding = "2.1"
 [workspace.lints.clippy]
 all = { level = "warn", priority = -1 }
 cargo_common_metadata = "allow"
+# Financial types (Money) intentionally convert between i64 cents and f64 dollars
+cast_possible_truncation = "allow"
+cast_precision_loss = "allow"
 enum_glob_use = "deny"
 expect_used = "warn"
 if_not_else = "allow"
@@ -93,6 +96,8 @@ module_name_repetitions = "allow"
 multiple_crate_versions = "allow"
 must_use_candidate = "allow"
 needless_pass_by_value = "warn"
+# OpenAPI derive macros generate code with for_each patterns
+needless_for_each = "allow"
 nursery = { level = "warn", priority = -1 }
 panic = "warn"
 pedantic = { level = "warn", priority = -1 }

@@ -236,7 +236,6 @@ fn test_full_name_after_profile_update() {
     assert_eq!(user.full_name(), Some("John Doe".to_string()));
 }
 
-// Edge case tests
 #[test]
 fn test_user_with_empty_email() {
     let user = User::new(String::new(), "hash".to_string(), None, None);
@@ -302,7 +301,7 @@ fn test_user_with_empty_string_names() {
 
     assert_eq!(user.first_name, Some(String::new()));
     assert_eq!(user.last_name, Some(String::new()));
-    assert_eq!(user.full_name(), Some(" ".to_string())); // Empty strings result in space
+    assert_eq!(user.full_name(), Some(" ".to_string()));
 }
 
 #[test]

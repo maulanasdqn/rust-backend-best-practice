@@ -6,7 +6,6 @@ use uuid::Uuid;
 
 use crate::domain::{Transaction, TransactionType};
 
-// Response DTOs
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct TransactionResponse {
     pub id: Uuid,
@@ -36,7 +35,6 @@ impl From<Transaction> for TransactionResponse {
     }
 }
 
-// Request DTOs
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct CreateTransactionRequest {
     pub account_id: Uuid,
@@ -53,16 +51,15 @@ pub struct UpdateTransactionRequest {
     pub description: Option<String>,
 }
 
-// Validation implementations
 impl Validatable for CreateTransactionRequest {
     fn schema() -> ObjectSchema {
         object()
-      .field("account_id", string()) // UUID will be validated by serde
-      .field("transaction_type", string()) // enum will be validated by serde
-      .field("amount", number().positive().int())
-      .field("category", string().min(1).max(50).optional())
-      .field("description", string().max(500).optional())
-      .field("transaction_date", string()) // ISO 8601 date will be validated by chrono
+            .field("account_id", string())
+            .field("transaction_type", string())
+            .field("amount", number().positive().int())
+            .field("category", string().min(1).max(50).optional())
+            .field("description", string().max(500).optional())
+            .field("transaction_date", string())
     }
 }
 

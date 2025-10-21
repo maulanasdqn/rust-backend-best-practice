@@ -5,7 +5,6 @@ pub mod otp_service;
 pub mod password_hash_service;
 pub mod two_factor_service;
 
-// Re-exports
 pub use email_service::EmailService;
 pub use google_oauth_service::GoogleOAuthService;
 pub use jwt_service::JwtService;

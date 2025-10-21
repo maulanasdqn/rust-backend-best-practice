@@ -4,7 +4,6 @@ use uuid::Uuid;
 
 use crate::domain::{EmailVerification, EmailVerificationRepository};
 
-/// Postgres implementation of `EmailVerificationRepository`
 #[derive(Clone, Debug)]
 pub struct PostgresEmailVerificationRepository {
     pool: PgPool,
@@ -100,20 +99,12 @@ impl EmailVerificationRepository for PostgresEmailVerificationRepository {
 
 #[cfg(test)]
 mod tests {
-    // Note: These tests require a test database
-    // You would typically use sqlx::test macro for integration tests
 
     #[ignore = "Requires test database"]
     #[tokio::test]
-    async fn test_create_and_find_email_verification() {
-        // This test requires a real database connection
-        // Implement when you have test database setup
-    }
+    async fn test_create_and_find_email_verification() {}
 
     #[ignore = "Requires test database"]
     #[tokio::test]
-    async fn test_delete_expired_verifications() {
-        // This test requires a real database connection
-        // Implement when you have test database setup
-    }
+    async fn test_delete_expired_verifications() {}
 }

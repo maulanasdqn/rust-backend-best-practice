@@ -3,10 +3,6 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-// ============================================================================
-// Register
-// ============================================================================
-
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct RegisterRequest {
     pub email: String,
@@ -21,19 +17,11 @@ pub struct RegisterResponse {
     pub message: String,
 }
 
-// ============================================================================
-// Verify Email
-// ============================================================================
-
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct VerifyEmailRequest {
     pub user_id: Uuid,
     pub otp_code: String,
 }
-
-// ============================================================================
-// Login
-// ============================================================================
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct LoginRequest {
@@ -48,10 +36,6 @@ pub struct LoginResponse {
     pub requires_2fa: bool,
 }
 
-// ============================================================================
-// Refresh Token
-// ============================================================================
-
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct RefreshTokenRequest {
     pub refresh_token: String,
@@ -62,18 +46,10 @@ pub struct RefreshTokenResponse {
     pub access_token: String,
 }
 
-// ============================================================================
-// Logout
-// ============================================================================
-
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct LogoutRequest {
     pub refresh_token: String,
 }
-
-// ============================================================================
-// Password Reset
-// ============================================================================
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct RequestPasswordResetRequest {
@@ -91,10 +67,6 @@ pub struct ChangePasswordRequest {
     pub current_password: String,
     pub new_password: String,
 }
-
-// ============================================================================
-// Two-Factor Authentication
-// ============================================================================
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct Enable2FAResponse {
@@ -116,10 +88,6 @@ pub struct Disable2FARequest {
     pub code: String,
 }
 
-// ============================================================================
-// Google OAuth
-// ============================================================================
-
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct GoogleOAuthCallbackRequest {
     pub code: String,
@@ -131,10 +99,6 @@ pub struct GoogleOAuthCallbackResponse {
     pub refresh_token: String,
     pub is_new_user: bool,
 }
-
-// ============================================================================
-// Common Responses
-// ============================================================================
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct MessageResponse {
@@ -149,10 +113,6 @@ impl MessageResponse {
     }
 }
 
-// ============================================================================
-// Validation Implementations
-// ============================================================================
-
 impl Validatable for RegisterRequest {
     fn schema() -> ObjectSchema {
         object()
@@ -166,8 +126,8 @@ impl Validatable for RegisterRequest {
 impl Validatable for VerifyEmailRequest {
     fn schema() -> ObjectSchema {
         object()
-            .field("user_id", string()) // UUID validation handled by serde
-            .field("otp_code", string().regex(r"^\d{6}$")) // exactly 6 digits
+            .field("user_id", string())
+            .field("otp_code", string().regex(r"^\d{6}$"))
     }
 }
 
@@ -216,8 +176,8 @@ impl Validatable for ChangePasswordRequest {
 impl Validatable for Verify2FARequest {
     fn schema() -> ObjectSchema {
         object()
-            .field("code", string().regex(r"^\d{6}$")) // exactly 6 digits
-            .field("enable_on_success", string().optional()) // boolean will be handled by serde
+            .field("code", string().regex(r"^\d{6}$"))
+            .field("enable_on_success", string().optional())
     }
 }
 
@@ -225,7 +185,7 @@ impl Validatable for Disable2FARequest {
     fn schema() -> ObjectSchema {
         object()
             .field("password", string().min(1))
-            .field("code", string().regex(r"^\d{6}$")) // exactly 6 digits
+            .field("code", string().regex(r"^\d{6}$"))
     }
 }
 

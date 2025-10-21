@@ -25,7 +25,6 @@ impl CreateUser {
         first_name: Option<String>,
         last_name: Option<String>,
     ) -> Result<User, AppError> {
-        // Check if user already exists
         if let Some(_existing) = self
             .repository
             .find_by_email(&email)

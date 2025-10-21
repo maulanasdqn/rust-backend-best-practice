@@ -1,6 +1,5 @@
 use serde::Deserialize;
 
-/// Service for Google `OAuth` authentication
 #[derive(Clone, Debug)]
 pub struct GoogleOAuthService {
     client_id: String,
@@ -23,12 +22,6 @@ struct GoogleUserInfo {
 }
 
 impl GoogleOAuthService {
-    /// Creates a new `GoogleOAuthService`
-    ///
-    /// # Arguments
-    /// * `client_id` - Google `OAuth` client ID
-    /// * `client_secret` - Google `OAuth` client secret
-    /// * `redirect_uri` - `OAuth` redirect URI (e.g., "<http://localhost:8080/api/auth/google/callback>")
     pub fn new(client_id: String, client_secret: String, redirect_uri: String) -> Self {
         Self {
             client_id,
@@ -38,14 +31,7 @@ impl GoogleOAuthService {
         }
     }
 
-    /// Generates the Google `OAuth` authorization URL
-    ///
-    /// This URL should be used to redirect the user to Google's consent screen
-    ///
-    /// # Returns
-    /// The authorization URL as a string
     pub fn get_authorization_url(&self) -> String {
-        // Build Google OAuth URL manually
         let scopes = "openid email profile";
         format!(
             "https://accounts.google.com/o/oauth2/v2/auth?client_id={}&redirect_uri={}&response_type=code&scope={}",
@@ -55,15 +41,7 @@ impl GoogleOAuthService {
         )
     }
 
-    /// Exchanges the authorization code for user information
-    ///
-    /// # Arguments
-    /// * `code` - The authorization code received from Google's callback
-    ///
-    /// # Returns
-    /// A tuple of (email, name, `google_id`)
     pub async fn get_user_info(&self, code: &str) -> anyhow::Result<(String, String, String)> {
-        // Step 1: Exchange authorization code for access token
         let token_response = self
             .http_client
             .post("https://oauth2.googleapis.com/token")
@@ -88,7 +66,6 @@ impl GoogleOAuthService {
             .await
             .map_err(|e| anyhow::anyhow!("Failed to parse token response: {e}"))?;
 
-        // Step 2: Use access token to get user info
         let user_info_response = self
             .http_client
             .get("https://www.googleapis.com/oauth2/v2/userinfo")
@@ -114,15 +91,7 @@ impl GoogleOAuthService {
         Ok((email, name, google_id))
     }
 
-    /// Validates that the user has verified their email with Google
-    ///
-    /// # Arguments
-    /// * `code` - The authorization code received from Google's callback
-    ///
-    /// # Returns
-    /// true if the email is verified, false otherwise
     pub async fn is_email_verified(&self, code: &str) -> anyhow::Result<bool> {
-        // Exchange code for access token
         let token_response = self
             .http_client
             .post("https://oauth2.googleapis.com/token")
@@ -142,7 +111,6 @@ impl GoogleOAuthService {
             .await
             .map_err(|e| anyhow::anyhow!("Failed to parse token response: {e}"))?;
 
-        // Fetch user info
         let user_info_response = self
             .http_client
             .get("https://www.googleapis.com/oauth2/v2/userinfo")
@@ -174,7 +142,6 @@ mod tests {
 
         let auth_url = service.get_authorization_url();
 
-        // Verify the URL contains expected parameters
         assert!(auth_url.contains("client_id=test_client_id"));
         assert!(auth_url.contains("redirect_uri="));
         assert!(auth_url.contains("scope="));
@@ -190,8 +157,6 @@ mod tests {
             "http://localhost:8080/callback".to_string(),
         );
 
-        // This test requires a valid authorization code from Google
-        // In practice, you would mock this or use integration tests
         let result = service.get_user_info("invalid_code").await;
 
         assert!(result.is_err());

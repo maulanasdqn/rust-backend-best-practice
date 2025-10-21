@@ -353,7 +353,6 @@ fn test_start_date_is_preserved() {
     assert_eq!(budget.start_date, specific_date);
 }
 
-// Edge case tests
 #[test]
 fn test_budget_with_max_i64_amount() {
     let user_id = Uuid::new_v4();
@@ -578,7 +577,7 @@ fn test_very_large_budget_amount() {
     let budget = Budget::new(
         user_id,
         "Corporate Budget".to_string(),
-        100_000_000_000_00, // $1 trillion
+        100_000_000_000_00,
         BudgetPeriod::Yearly,
         Utc::now(),
     );

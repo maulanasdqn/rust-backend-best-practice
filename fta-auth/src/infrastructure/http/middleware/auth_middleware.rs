@@ -9,14 +9,12 @@ use std::sync::Arc;
 
 use crate::infrastructure::{http::dto::MessageResponse, services::JwtService};
 
-/// Extension key for authenticated user ID
 #[derive(Debug)]
 pub struct AuthUser {
     pub user_id: uuid::Uuid,
     pub email: String,
 }
 
-/// Middleware state containing JWT service
 #[derive(Clone)]
 pub struct AuthMiddlewareState {
     pub jwt_service: JwtService,
@@ -30,18 +28,13 @@ impl std::fmt::Debug for AuthMiddlewareState {
     }
 }
 
-/// Middleware that requires authentication
-///
-/// Extracts JWT from Authorization header, verifies it, and adds user info to request extensions
 pub async fn require_auth(
     State(state): State<Arc<AuthMiddlewareState>>,
     mut request: Request,
     next: Next,
 ) -> Result<Response, (StatusCode, Json<MessageResponse>)> {
-    // Extract token from Authorization header
     let token = extract_token_from_header(&request)?;
 
-    // Verify token
     let claims = state.jwt_service.verify_token(token).map_err(|e| {
         (
             StatusCode::UNAUTHORIZED,
@@ -49,7 +42,6 @@ pub async fn require_auth(
         )
     })?;
 
-    // Ensure it's an access token
     if !claims.is_access_token() {
         return Err((
             StatusCode::UNAUTHORIZED,
@@ -57,7 +49,6 @@ pub async fn require_auth(
         ));
     }
 
-    // Add user info to request extensions
     request.extensions_mut().insert(AuthUser {
         user_id: claims.sub,
         email: claims.email,
@@ -66,18 +57,14 @@ pub async fn require_auth(
     Ok(next.run(request).await)
 }
 
-/// Middleware that optionally extracts auth info but doesn't fail if missing
 pub async fn optional_auth(
     State(state): State<Arc<AuthMiddlewareState>>,
     mut request: Request,
     next: Next,
 ) -> Response {
-    // Try to extract token
     if let Ok(token) = extract_token_from_header(&request) {
-        // Try to verify token
         if let Ok(claims) = state.jwt_service.verify_token(token) {
             if claims.is_access_token() {
-                // Add user info to request extensions
                 request.extensions_mut().insert(AuthUser {
                     user_id: claims.sub,
                     email: claims.email,
@@ -89,7 +76,6 @@ pub async fn optional_auth(
     next.run(request).await
 }
 
-/// Helper function to extract token from Authorization header
 fn extract_token_from_header(
     request: &Request,
 ) -> Result<&str, (StatusCode, Json<MessageResponse>)> {
@@ -110,7 +96,6 @@ fn extract_token_from_header(
         )
     })?;
 
-    // Check for Bearer token
     if !auth_str.starts_with("Bearer ") {
         return Err((
             StatusCode::UNAUTHORIZED,
@@ -120,7 +105,7 @@ fn extract_token_from_header(
         ));
     }
 
-    let token = &auth_str[7..]; // Skip "Bearer "
+    let token = &auth_str[7..];
 
     if token.is_empty() {
         return Err((
@@ -132,18 +117,6 @@ fn extract_token_from_header(
     Ok(token)
 }
 
-/// Axum extractor for authenticated user
-///
-/// # Example
-/// ```
-/// use axum::extract::Extension;
-///
-/// async fn protected_handler(
-///     Extension(auth_user): Extension<AuthUser>,
-/// ) -> String {
-///     format!("Hello, user {}!", auth_user.user_id)
-/// }
-/// ```
 impl axum::extract::FromRequestParts<Arc<AuthMiddlewareState>> for AuthUser {
     type Rejection = (StatusCode, Json<MessageResponse>);
 
@@ -160,7 +133,6 @@ impl axum::extract::FromRequestParts<Arc<AuthMiddlewareState>> for AuthUser {
     }
 }
 
-// Implement Clone for AuthUser
 impl Clone for AuthUser {
     fn clone(&self) -> Self {
         Self {
@@ -173,8 +145,5 @@ impl Clone for AuthUser {
 #[cfg(test)]
 mod tests {
     #[test]
-    fn test_extract_bearer_token() {
-        // This would require creating a full Request object
-        // In practice, you'd use integration tests
-    }
+    fn test_extract_bearer_token() {}
 }

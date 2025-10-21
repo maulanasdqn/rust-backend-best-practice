@@ -7,7 +7,6 @@ use crate::{
     infrastructure::services::{GoogleOAuthService, JwtService, PasswordHashService},
 };
 
-/// Response from Google `OAuth` callback use case
 #[derive(Debug)]
 pub struct GoogleOAuthCallbackResult {
     pub access_token: String,
@@ -15,7 +14,6 @@ pub struct GoogleOAuthCallbackResult {
     pub is_new_user: bool,
 }
 
-/// Use case for handling Google `OAuth` callback
 pub struct GoogleOAuthCallback {
     user_repository: Arc<dyn UserRepository>,
     refresh_token_repository: Arc<dyn RefreshTokenRepository>,
@@ -56,39 +54,16 @@ impl GoogleOAuthCallback {
         }
     }
 
-    /// Handles the `OAuth` callback and logs in or registers the user
-    ///
-    /// # Arguments
-    /// * `code` - The authorization code from Google
-    ///
-    /// # Returns
-    /// `GoogleOAuthCallbackResult` with tokens and user status
     pub async fn execute(&self, code: String) -> anyhow::Result<GoogleOAuthCallbackResult> {
-        // Exchange code for user info
         let (email, name, _google_id) = self
             .google_oauth_service
             .get_user_info(&code)
             .await
             .context("Failed to get user info from Google")?;
 
-        // Check if user exists
         let (user, is_new_user) = match self.user_repository.find_by_email(&email).await? {
             Some(existing_user) => {
-                // User exists - verify it's the same Google account
-                // Note: Uncomment when User struct is updated with oauth fields
-                // if let Some(existing_oauth_id) = &existing_user.oauth_provider_id {
-                //     if existing_oauth_id != &google_id {
-                //         return Err(anyhow::anyhow!(
-                //             "This email is already associated with a different account"
-                //         ));
-                //     }
-                // }
-
-                // Update last login
                 let user = existing_user;
-                // Note: Uncomment when User struct is updated
-                // user.last_login_at = Some(Utc::now());
-                // user.updated_at = Utc::now();
 
                 let updated_user = self
                     .user_repository
@@ -99,12 +74,9 @@ impl GoogleOAuthCallback {
                 (updated_user, false)
             },
             None => {
-                // Create new user
-                // Generate a random password hash (user won't use it for OAuth)
                 let random_password = uuid::Uuid::new_v4().to_string();
                 let password_hash = self.password_hash_service.hash_password(&random_password)?;
 
-                // Parse name into first_name and last_name
                 let name_parts: Vec<&str> = name.split_whitespace().collect();
                 let (first_name, last_name) = match name_parts.len() {
                     0 => (None, None),
@@ -118,13 +90,6 @@ impl GoogleOAuthCallback {
 
                 let user = User::new(email.clone(), password_hash, first_name, last_name);
 
-                // Set OAuth fields
-                // Note: Uncomment when User struct is updated with oauth fields
-                // user.oauth_provider = Some(OAuthProvider::Google);
-                // user.oauth_provider_id = Some(google_id);
-                // user.email_verified = true; // Google verifies emails
-                // user.last_login_at = Some(Utc::now());
-
                 let created_user = self
                     .user_repository
                     .create(user)
@@ -135,7 +100,6 @@ impl GoogleOAuthCallback {
             },
         };
 
-        // Generate JWT tokens
         let access_token = self
             .jwt_service
             .generate_access_token(user.id, user.email.clone())?;
@@ -144,7 +108,6 @@ impl GoogleOAuthCallback {
             .jwt_service
             .generate_refresh_token(user.id, user.email.clone())?;
 
-        // Store refresh token in database
         let refresh_token = RefreshToken::new(user.id, refresh_token_str.clone(), expires_at);
         self.refresh_token_repository
             .create(refresh_token)
@@ -160,6 +123,4 @@ impl GoogleOAuthCallback {
 }
 
 #[cfg(test)]
-mod tests {
-    // Integration tests would go here
-}
+mod tests {}

@@ -3,27 +3,18 @@ use argon2::{
     Argon2,
 };
 
-/// Service for hashing and verifying passwords using Argon2id
 #[derive(Clone, Debug)]
 pub struct PasswordHashService {
     argon2: Argon2<'static>,
 }
 
 impl PasswordHashService {
-    /// Creates a new `PasswordHashService` with default Argon2 configuration
     pub fn new() -> Self {
         Self {
             argon2: Argon2::default(),
         }
     }
 
-    /// Hashes a password using Argon2id
-    ///
-    /// # Arguments
-    /// * `password` - The plain text password to hash
-    ///
-    /// # Returns
-    /// The hashed password as a PHC string
     pub fn hash_password(&self, password: &str) -> anyhow::Result<String> {
         let salt = SaltString::generate(&mut OsRng);
         let password_hash = self
@@ -34,14 +25,6 @@ impl PasswordHashService {
         Ok(password_hash.to_string())
     }
 
-    /// Verifies a password against a hash
-    ///
-    /// # Arguments
-    /// * `password` - The plain text password to verify
-    /// * `password_hash` - The PHC string hash to verify against
-    ///
-    /// # Returns
-    /// `true` if the password matches the hash, `false` otherwise
     pub fn verify_password(&self, password: &str, password_hash: &str) -> anyhow::Result<bool> {
         let parsed_hash = PasswordHash::new(password_hash)
             .map_err(|e| anyhow::anyhow!("Failed to parse password hash: {e}"))?;
@@ -93,10 +76,8 @@ mod tests {
         let hash1 = service.hash_password(password).unwrap();
         let hash2 = service.hash_password(password).unwrap();
 
-        // Hashes should be different due to different salts
         assert_ne!(hash1, hash2);
 
-        // But both should verify correctly
         assert!(service.verify_password(password, &hash1).unwrap());
         assert!(service.verify_password(password, &hash2).unwrap());
     }

@@ -24,16 +24,13 @@ use crate::{
     },
 };
 
-/// Application state containing all dependencies
 #[derive(Clone)]
 pub struct AuthAppState {
-    // Repositories
     pub user_repository: Arc<dyn fta_users::domain::UserRepository>,
     pub refresh_token_repository: Arc<dyn RefreshTokenRepository>,
     pub email_verification_repository: Arc<dyn EmailVerificationRepository>,
     pub password_reset_token_repository: Arc<dyn PasswordResetTokenRepository>,
 
-    // Services
     pub password_hash_service: PasswordHashService,
     pub jwt_service: JwtService,
     pub email_service: EmailService,
@@ -41,7 +38,6 @@ pub struct AuthAppState {
     pub two_factor_service: TwoFactorService,
     pub otp_service: OtpService,
 
-    // Configuration
     pub base_url: String,
 }
 
@@ -72,11 +68,6 @@ impl std::fmt::Debug for AuthAppState {
     }
 }
 
-// ============================================================================
-// Register
-// ============================================================================
-
-/// Register a new user
 #[utoipa::path(
     post,
     path = "/api/v1/register",
@@ -119,11 +110,6 @@ pub async fn register_handler(
     }
 }
 
-// ============================================================================
-// Verify Email
-// ============================================================================
-
-/// Verify user's email address
 #[utoipa::path(
     post,
     path = "/api/v1/verify-email",
@@ -152,11 +138,6 @@ pub async fn verify_email_handler(
     }
 }
 
-// ============================================================================
-// Login
-// ============================================================================
-
-/// Login with email and password
 #[utoipa::path(
     post,
     path = "/api/v1/login",
@@ -191,11 +172,6 @@ pub async fn login_handler(
     }
 }
 
-// ============================================================================
-// Refresh Token
-// ============================================================================
-
-/// Refresh access token
 #[utoipa::path(
     post,
     path = "/api/v1/refresh",
@@ -225,11 +201,6 @@ pub async fn refresh_token_handler(
     }
 }
 
-// ============================================================================
-// Logout
-// ============================================================================
-
-/// Logout (invalidate refresh token)
 #[utoipa::path(
     post,
     path = "/api/v1/logout",
@@ -255,12 +226,6 @@ pub async fn logout_handler(
     }
 }
 
-// ============================================================================
-// Logout All
-// ============================================================================
-
-/// Logout from all devices (invalidate all refresh tokens)
-/// Note: Requires authentication middleware to extract user_id
 #[utoipa::path(
     post,
     path = "/api/v1/logout-all",
@@ -289,11 +254,6 @@ pub async fn logout_all_handler(
     }
 }
 
-// ============================================================================
-// Request Password Reset
-// ============================================================================
-
-/// Request password reset email
 #[utoipa::path(
     post,
     path = "/api/v1/password-reset/request",
@@ -314,7 +274,6 @@ pub async fn request_password_reset_handler(
         state.base_url.clone(),
     );
 
-    // Always return success to avoid email enumeration
     let _ = use_case.execute(req.email).await;
 
     Ok(Json(MessageResponse::new(
@@ -322,11 +281,6 @@ pub async fn request_password_reset_handler(
     )))
 }
 
-// ============================================================================
-// Reset Password
-// ============================================================================
-
-/// Reset password with token
 #[utoipa::path(
     post,
     path = "/api/v1/password-reset/reset",
@@ -356,11 +310,6 @@ pub async fn reset_password_handler(
     }
 }
 
-// ============================================================================
-// Change Password
-// ============================================================================
-
-/// Change password (requires authentication)
 #[utoipa::path(
     post,
     path = "/api/v1/password/change",
@@ -396,11 +345,6 @@ pub async fn change_password_handler(
     }
 }
 
-// ============================================================================
-// Enable 2FA
-// ============================================================================
-
-/// Enable Two-Factor Authentication
 #[utoipa::path(
     post,
     path = "/api/v1/2fa/enable",
@@ -434,11 +378,6 @@ pub async fn enable_2fa_handler(
     }
 }
 
-// ============================================================================
-// Verify 2FA
-// ============================================================================
-
-/// Verify 2FA code
 #[utoipa::path(
     post,
     path = "/api/v1/2fa/verify",
@@ -483,11 +422,6 @@ pub async fn verify_2fa_handler(
     }
 }
 
-// ============================================================================
-// Disable 2FA
-// ============================================================================
-
-/// Disable Two-Factor Authentication
 #[utoipa::path(
     post,
     path = "/api/v1/2fa/disable",
@@ -524,11 +458,6 @@ pub async fn disable_2fa_handler(
     }
 }
 
-// ============================================================================
-// Google OAuth Login
-// ============================================================================
-
-/// Get Google OAuth authorization URL
 #[utoipa::path(
     get,
     path = "/api/v1/google/login",
@@ -547,11 +476,6 @@ pub async fn google_oauth_login_handler(
     Json(MessageResponse::new(auth_url))
 }
 
-// ============================================================================
-// Google OAuth Callback
-// ============================================================================
-
-/// Handle Google OAuth callback
 #[utoipa::path(
     post,
     path = "/api/v1/google/callback",

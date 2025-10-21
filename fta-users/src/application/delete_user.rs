@@ -20,7 +20,6 @@ impl DeleteUser {
     }
 
     pub async fn execute(&self, id: Uuid) -> Result<(), AppError> {
-        // Verify user exists before deleting
         self.repository
             .find_by_id(&id)
             .await

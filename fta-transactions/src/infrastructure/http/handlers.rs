@@ -81,8 +81,8 @@ pub async fn list_transactions_handler(
         .map(TransactionResponse::from)
         .collect();
 
-    #[allow(clippy::cast_sign_loss)]
-    let meta = PaginationMeta::new(params.page, params.per_page, total.max(0) as u64);
+    let total_u64 = u64::try_from(total.max(0)).unwrap_or(0);
+    let meta = PaginationMeta::new(params.page, params.per_page, total_u64);
     let response = ListResponse::new(responses, meta);
     Ok(Json(response))
 }

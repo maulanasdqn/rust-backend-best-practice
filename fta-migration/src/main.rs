@@ -12,27 +12,21 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Run all pending migrations
     Run,
-    /// Revert the last applied migration
+
     Revert,
-    /// Show migration status
+
     Info,
-    /// Create a new migration file
-    Add {
-        /// Name of the migration (e.g., "`create_foo_table`")
-        name: String,
-    },
+
+    Add { name: String },
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Load environment variables
     dotenvy::dotenv().ok();
 
     let cli = Cli::parse();
 
-    // Get database URL from environment
     let database_url = std::env::var("DATABASE_URL")
         .context("DATABASE_URL must be set in .env file or environment")?;
 
@@ -99,11 +93,9 @@ async fn show_migration_info(database_url: &str) -> Result<()> {
 
     println!("\n📊 Migration Status:\n");
 
-    // Get all migrations
     let migrator = sqlx::migrate!("./migrations");
     let migrations = migrator.migrations.as_ref();
 
-    // Get applied migrations
     let applied: Vec<i64> =
         sqlx::query_scalar("SELECT version FROM _sqlx_migrations ORDER BY version")
             .fetch_all(&pool)
@@ -139,10 +131,8 @@ async fn show_migration_info(database_url: &str) -> Result<()> {
 fn create_migration(name: &str) -> Result<()> {
     use std::fs;
 
-    // Format: YYYYMMDDHHMMSS
     let version = chrono::Utc::now().format("%Y%m%d%H%M%S").to_string();
 
-    // Sanitize migration name
     let safe_name = name
         .to_lowercase()
         .replace(' ', "_")
@@ -153,7 +143,6 @@ fn create_migration(name: &str) -> Result<()> {
     let filename = format!("{version}_{safe_name}.sql");
     let filepath = format!("./migrations/{filename}");
 
-    // Create migration file with template
     let template = format!(
         "-- Migration: {}\n\
          -- Created: {}\n\

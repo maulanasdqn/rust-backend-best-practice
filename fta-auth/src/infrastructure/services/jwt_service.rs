@@ -4,7 +4,6 @@ use uuid::Uuid;
 
 use crate::domain::Claims;
 
-/// Service for generating and verifying JWT tokens
 #[derive(Clone)]
 pub struct JwtService {
     encoding_key: EncodingKey,
@@ -31,12 +30,6 @@ impl std::fmt::Debug for JwtService {
 }
 
 impl JwtService {
-    /// Creates a new `JwtService` with the provided secret and expiry settings
-    ///
-    /// # Arguments
-    /// * `jwt_secret` - The secret key used for signing tokens
-    /// * `access_token_expiry_minutes` - Expiry time for access tokens (default: 15 minutes)
-    /// * `refresh_token_expiry_minutes` - Expiry time for refresh tokens (default: 10080 minutes = 7 days)
     pub fn new(
         jwt_secret: &str,
         access_token_expiry_minutes: Option<i64>,
@@ -46,18 +39,10 @@ impl JwtService {
             encoding_key: EncodingKey::from_secret(jwt_secret.as_bytes()),
             decoding_key: DecodingKey::from_secret(jwt_secret.as_bytes()),
             access_token_expiry_minutes: access_token_expiry_minutes.unwrap_or(15),
-            refresh_token_expiry_minutes: refresh_token_expiry_minutes.unwrap_or(10080), // 7 days
+            refresh_token_expiry_minutes: refresh_token_expiry_minutes.unwrap_or(10080),
         }
     }
 
-    /// Generates a new access token for a user
-    ///
-    /// # Arguments
-    /// * `user_id` - The user's UUID
-    /// * `email` - The user's email address
-    ///
-    /// # Returns
-    /// A signed JWT access token as a string
     pub fn generate_access_token(&self, user_id: Uuid, email: String) -> anyhow::Result<String> {
         let now = Utc::now();
         let exp = (now + chrono::Duration::minutes(self.access_token_expiry_minutes)).timestamp();
@@ -70,14 +55,6 @@ impl JwtService {
         Ok(token)
     }
 
-    /// Generates a new refresh token for a user
-    ///
-    /// # Arguments
-    /// * `user_id` - The user's UUID
-    /// * `email` - The user's email address
-    ///
-    /// # Returns
-    /// A tuple of (signed JWT refresh token as a string, expiration `DateTime`)
     pub fn generate_refresh_token(
         &self,
         user_id: Uuid,
@@ -95,20 +72,12 @@ impl JwtService {
         Ok((token, expires_at))
     }
 
-    /// Verifies a JWT token and returns the claims if valid
-    ///
-    /// # Arguments
-    /// * `token` - The JWT token to verify
-    ///
-    /// # Returns
-    /// The decoded Claims if the token is valid
     pub fn verify_token(&self, token: &str) -> anyhow::Result<Claims> {
         let token_data = decode::<Claims>(token, &self.decoding_key, &Validation::default())
             .map_err(|e| anyhow::anyhow!("Failed to verify token: {e}"))?;
 
         let claims = token_data.claims;
 
-        // Check if token is expired
         if claims.is_expired() {
             return Err(anyhow::anyhow!("Token has expired"));
         }
@@ -116,14 +85,6 @@ impl JwtService {
         Ok(claims)
     }
 
-    /// Decodes a JWT token without verifying the signature
-    /// ⚠️ WARNING: Only use this when you need to inspect an expired token
-    ///
-    /// # Arguments
-    /// * `token` - The JWT token to decode
-    ///
-    /// # Returns
-    /// The decoded Claims without signature verification
     pub fn decode_token_unverified(&self, token: &str) -> anyhow::Result<Claims> {
         let mut validation = Validation::default();
         validation.insecure_disable_signature_validation();
@@ -135,14 +96,6 @@ impl JwtService {
         Ok(token_data.claims)
     }
 
-    /// Extracts user ID from a token without full verification
-    /// Useful for logging or metrics
-    ///
-    /// # Arguments
-    /// * `token` - The JWT token
-    ///
-    /// # Returns
-    /// The user UUID if the token can be decoded
     pub fn extract_user_id(&self, token: &str) -> anyhow::Result<Uuid> {
         let claims = self.decode_token_unverified(token)?;
         Ok(claims.sub)

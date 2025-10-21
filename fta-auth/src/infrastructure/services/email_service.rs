@@ -3,7 +3,6 @@ use lettre::{
     AsyncTransport, Message, Tokio1Executor,
 };
 
-/// Service for sending emails using SMTP
 #[derive(Clone, Debug)]
 pub struct EmailService {
     mailer: AsyncSmtpTransport<Tokio1Executor>,
@@ -12,15 +11,6 @@ pub struct EmailService {
 }
 
 impl EmailService {
-    /// Creates a new `EmailService` with SMTP configuration
-    ///
-    /// # Arguments
-    /// * `smtp_host` - SMTP server hostname
-    /// * `smtp_port` - SMTP server port
-    /// * `smtp_username` - SMTP authentication username
-    /// * `smtp_password` - SMTP authentication password
-    /// * `from_email` - Sender email address
-    /// * `from_name` - Sender display name
     pub fn new(
         smtp_host: &str,
         smtp_port: u16,
@@ -44,12 +34,6 @@ impl EmailService {
         })
     }
 
-    /// Sends an email verification OTP to a user
-    ///
-    /// # Arguments
-    /// * `to_email` - Recipient email address
-    /// * `to_name` - Recipient name
-    /// * `otp_code` - 6-digit OTP code
     pub async fn send_verification_otp(
         &self,
         to_email: &str,
@@ -81,13 +65,6 @@ impl EmailService {
         self.send_email(to_email, to_name, subject, &body).await
     }
 
-    /// Sends a password reset link to a user
-    ///
-    /// # Arguments
-    /// * `to_email` - Recipient email address
-    /// * `to_name` - Recipient name
-    /// * `reset_token` - Password reset token
-    /// * `base_url` - Base URL of the application (e.g., "<https://example.com>")
     pub async fn send_password_reset(
         &self,
         to_email: &str,
@@ -124,7 +101,6 @@ impl EmailService {
         self.send_email(to_email, to_name, subject, &body).await
     }
 
-    /// Internal method to send an email
     async fn send_email(
         &self,
         to_email: &str,
@@ -161,9 +137,6 @@ impl EmailService {
 mod tests {
     use super::*;
 
-    // Note: These tests require a valid SMTP server to run
-    // In a real-world scenario, you would use a mock SMTP server for testing
-
     #[tokio::test]
     #[ignore = "Requires SMTP configuration"]
     async fn test_send_verification_otp() {
@@ -181,7 +154,6 @@ mod tests {
             .send_verification_otp("test@example.com", "Test User", "123456")
             .await;
 
-        // This will fail without proper SMTP config, which is expected
         assert!(result.is_ok() || result.is_err());
     }
 
@@ -207,7 +179,6 @@ mod tests {
             )
             .await;
 
-        // This will fail without proper SMTP config, which is expected
         assert!(result.is_ok() || result.is_err());
     }
 }

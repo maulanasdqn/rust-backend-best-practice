@@ -3,15 +3,14 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Claims {
-    /// Subject (user ID)
     pub sub: Uuid,
-    /// User email
+
     pub email: String,
-    /// Expiration time (Unix timestamp)
+
     pub exp: i64,
-    /// Issued at (Unix timestamp)
+
     pub iat: i64,
-    /// Token type: "access" or "refresh"
+
     pub token_type: String,
 }
 

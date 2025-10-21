@@ -1,14 +1,14 @@
+use crate::domain::{Account, AccountRepository, AccountType};
 use fta_errors::AppError;
+use std::fmt::Debug;
 use std::sync::Arc;
 use uuid::Uuid;
-
-use crate::domain::{Account, AccountRepository, AccountType};
 
 pub struct CreateAccount {
     repository: Arc<dyn AccountRepository>,
 }
 
-impl std::fmt::Debug for CreateAccount {
+impl Debug for CreateAccount {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("CreateAccount").finish()
     }

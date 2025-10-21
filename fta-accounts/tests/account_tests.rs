@@ -305,7 +305,6 @@ fn test_multiple_balance_updates() {
     assert_eq!(account.balance, 12500);
 }
 
-// Edge case tests
 #[test]
 fn test_account_with_max_i64_balance() {
     let user_id = Uuid::new_v4();
@@ -506,12 +505,12 @@ fn test_very_large_positive_balance() {
         user_id,
         "Billionaire Account".to_string(),
         AccountType::Investment,
-        100_000_000_000_00, // $1 billion
+        100_000_000_000_00,
         "USD".to_string(),
     );
 
-    account.update_balance(50_000_000_000_00); // Add $500 million
-    assert_eq!(account.balance, 150_000_000_000_00); // $1.5 billion
+    account.update_balance(50_000_000_000_00);
+    assert_eq!(account.balance, 150_000_000_000_00);
 }
 
 #[test]
@@ -521,10 +520,10 @@ fn test_very_large_negative_balance() {
         user_id,
         "Debt Account".to_string(),
         AccountType::Credit,
-        -100_000_000_00, // -$1 million in debt
+        -100_000_000_00,
         "USD".to_string(),
     );
 
-    account.update_balance(-50_000_000_00); // More debt
+    account.update_balance(-50_000_000_00);
     assert_eq!(account.balance, -150_000_000_00);
 }

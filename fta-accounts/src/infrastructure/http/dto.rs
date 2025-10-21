@@ -6,7 +6,6 @@ use uuid::Uuid;
 
 use crate::domain::{Account, AccountType};
 
-// Response DTOs
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct AccountResponse {
     pub id: Uuid,
@@ -36,7 +35,6 @@ impl From<Account> for AccountResponse {
     }
 }
 
-// Request DTOs
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct CreateAccountRequest {
     pub name: String,
@@ -50,14 +48,13 @@ pub struct UpdateAccountRequest {
     pub name: Option<String>,
 }
 
-// Validation implementations
 impl Validatable for CreateAccountRequest {
     fn schema() -> ObjectSchema {
         object()
-      .field("name", string().min(1).max(100))
-      .field("account_type", string()) // enum will be validated by serde
-      .field("initial_balance", number().int())
-      .field("currency", string().min(3).max(3).regex(r"^[A-Z]{3}$"))
+            .field("name", string().min(1).max(100))
+            .field("account_type", string())
+            .field("initial_balance", number().int())
+            .field("currency", string().min(3).max(3).regex(r"^[A-Z]{3}$"))
     }
 }
 

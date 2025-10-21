@@ -5,24 +5,20 @@ use serde_json::json;
 fn test_string_validation_min_max() {
     let schema = string().min(3).max(10);
 
-    // Valid cases
     assert!(schema.safe_parse(&json!("hello")).is_ok());
     assert!(schema.safe_parse(&json!("abc")).is_ok());
 
-    // Invalid cases
-    assert!(schema.safe_parse(&json!("ab")).is_err()); // too short
-    assert!(schema.safe_parse(&json!("this is too long")).is_err()); // too long
+    assert!(schema.safe_parse(&json!("ab")).is_err());
+    assert!(schema.safe_parse(&json!("this is too long")).is_err());
 }
 
 #[test]
 fn test_email_validation() {
     let schema = string().email();
 
-    // Valid cases
     assert!(schema.safe_parse(&json!("user@example.com")).is_ok());
     assert!(schema.safe_parse(&json!("test.user@domain.co.uk")).is_ok());
 
-    // Invalid cases
     assert!(schema.safe_parse(&json!("notanemail")).is_err());
     assert!(schema.safe_parse(&json!("@example.com")).is_err());
     assert!(schema.safe_parse(&json!("user@")).is_err());
@@ -32,12 +28,10 @@ fn test_email_validation() {
 fn test_number_validation() {
     let schema = number().min(0.0).max(100.0);
 
-    // Valid cases
     assert!(schema.safe_parse(&json!(50)).is_ok());
     assert!(schema.safe_parse(&json!(0)).is_ok());
     assert!(schema.safe_parse(&json!(100)).is_ok());
 
-    // Invalid cases
     assert!(schema.safe_parse(&json!(-1)).is_err());
     assert!(schema.safe_parse(&json!(101)).is_err());
 }
@@ -49,7 +43,6 @@ fn test_object_validation() {
         .field("age", number().min(0.0).max(120.0).int())
         .field("email", string().email());
 
-    // Valid case
     let valid_data = json!({
       "name": "John Doe",
       "age": 30,
@@ -57,7 +50,6 @@ fn test_object_validation() {
     });
     assert!(schema.safe_parse(&valid_data).is_ok());
 
-    // Invalid cases
     let invalid_name = json!({
       "name": "J",
       "age": 30,
@@ -79,7 +71,6 @@ fn test_optional_fields() {
         .field("required", string())
         .field("optional", string().optional());
 
-    // Both fields present
     assert!(schema
         .safe_parse(&json!({
           "required": "value",
@@ -87,7 +78,6 @@ fn test_optional_fields() {
         }))
         .is_ok());
 
-    // Only required field with null optional
     assert!(schema
         .safe_parse(&json!({
           "required": "value",
@@ -95,7 +85,6 @@ fn test_optional_fields() {
         }))
         .is_ok());
 
-    // Missing required field
     assert!(schema
         .safe_parse(&json!({
           "optional": "value"
@@ -107,11 +96,9 @@ fn test_optional_fields() {
 fn test_positive_number() {
     let schema = number().positive();
 
-    // Valid cases
     assert!(schema.safe_parse(&json!(1)).is_ok());
     assert!(schema.safe_parse(&json!(100.5)).is_ok());
 
-    // Invalid cases
     assert!(schema.safe_parse(&json!(0)).is_err());
     assert!(schema.safe_parse(&json!(-1)).is_err());
 }

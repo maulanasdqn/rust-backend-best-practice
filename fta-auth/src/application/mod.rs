@@ -1,4 +1,3 @@
-// Authentication use cases
 pub mod change_password;
 pub mod disable_2fa;
 pub mod enable_2fa;
@@ -14,7 +13,6 @@ pub mod reset_password;
 pub mod verify_2fa;
 pub mod verify_email;
 
-// Re-exports (make all public)
 pub use change_password::*;
 pub use disable_2fa::*;
 pub use enable_2fa::*;

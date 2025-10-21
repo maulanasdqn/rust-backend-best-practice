@@ -44,12 +44,10 @@ fn test_from_decimal_with_negative() {
 
 #[test]
 fn test_from_decimal_rounds_correctly() {
-    // Test rounding behavior
-    let money = Money::from_decimal(10.556); // Should round to 10.56
+    let money = Money::from_decimal(10.556);
     assert_eq!(money.amount(), 1056);
 }
 
-// Arithmetic operation tests
 #[test]
 fn test_add_positive_amounts() {
     let a = Money::new(1000);
@@ -106,7 +104,6 @@ fn test_subtract_with_zero() {
     assert_eq!(result.amount(), 1000);
 }
 
-// Conversion tests
 #[test]
 fn test_to_decimal_converts_correctly() {
     let money = Money::new(1050);
@@ -141,7 +138,6 @@ fn test_round_trip_conversion_negative() {
     assert_eq!(result, original);
 }
 
-// State checking tests
 #[test]
 fn test_is_positive_with_positive_amount() {
     let money = Money::new(100);
@@ -196,16 +192,15 @@ fn test_is_zero_with_negative_amount() {
     assert!(!money.is_zero());
 }
 
-// Precision and edge case tests
 #[test]
 fn test_large_amount() {
-    let money = Money::new(1_000_000_00); // $1,000,000.00
+    let money = Money::new(1_000_000_00);
     assert_eq!(money.to_decimal(), 1_000_000.0);
 }
 
 #[test]
 fn test_small_cents() {
-    let money = Money::new(1); // $0.01
+    let money = Money::new(1);
     assert_eq!(money.to_decimal(), 0.01);
 }
 
@@ -249,7 +244,6 @@ fn test_money_ordering() {
 
 #[test]
 fn test_typical_financial_operations() {
-    // Simulate a typical transaction scenario
     let initial_balance = Money::from_decimal(1000.00);
     let deposit = Money::from_decimal(250.50);
     let withdrawal = Money::from_decimal(75.25);
@@ -261,7 +255,6 @@ fn test_typical_financial_operations() {
     assert!(final_balance.is_positive());
 }
 
-// Edge case tests
 #[test]
 fn test_max_i64_value() {
     let money = Money::new(i64::MAX);
@@ -276,39 +269,39 @@ fn test_min_i64_value() {
 
 #[test]
 fn test_very_large_positive_amount() {
-    let money = Money::new(999_999_999_999_99); // $9,999,999,999,999.99
+    let money = Money::new(999_999_999_999_99);
     assert!(money.is_positive());
     assert_eq!(money.to_decimal(), 999_999_999_999.99);
 }
 
 #[test]
 fn test_very_large_negative_amount() {
-    let money = Money::new(-999_999_999_999_99); // -$9,999,999,999,999.99
+    let money = Money::new(-999_999_999_999_99);
     assert!(money.is_negative());
     assert_eq!(money.to_decimal(), -999_999_999_999.99);
 }
 
 #[test]
 fn test_from_decimal_with_very_small_fraction() {
-    let money = Money::from_decimal(0.001); // Should round to 0.00
+    let money = Money::from_decimal(0.001);
     assert_eq!(money.amount(), 0);
 }
 
 #[test]
 fn test_from_decimal_with_negative_very_small_fraction() {
-    let money = Money::from_decimal(-0.001); // Should round to 0.00
+    let money = Money::from_decimal(-0.001);
     assert_eq!(money.amount(), 0);
 }
 
 #[test]
 fn test_from_decimal_rounding_up() {
-    let money = Money::from_decimal(10.995); // Should round to 10.10
+    let money = Money::from_decimal(10.995);
     assert_eq!(money.amount(), 1100);
 }
 
 #[test]
 fn test_from_decimal_rounding_down() {
-    let money = Money::from_decimal(10.994); // Should round to 10.99
+    let money = Money::from_decimal(10.994);
     assert_eq!(money.amount(), 1099);
 }
 
@@ -331,11 +324,11 @@ fn test_subtract_resulting_in_zero() {
 #[test]
 fn test_multiple_additions_precision() {
     let mut result = Money::new(0);
-    // Add 0.01 one hundred times
+
     for _ in 0..100 {
         result = result.add(&Money::new(1));
     }
-    assert_eq!(result.amount(), 100); // Should be exactly $1.00
+    assert_eq!(result.amount(), 100);
     assert_eq!(result.to_decimal(), 1.00);
 }
 
@@ -345,7 +338,7 @@ fn test_alternating_add_subtract() {
     let amount = Money::new(500);
 
     let result = start.add(&amount).subtract(&amount);
-    assert_eq!(result.amount(), 10000); // Should return to original
+    assert_eq!(result.amount(), 10000);
 }
 
 #[test]
@@ -365,13 +358,12 @@ fn test_money_with_exactly_negative_one_cent() {
 #[test]
 fn test_from_decimal_with_many_decimal_places() {
     let money = Money::from_decimal(123.456789);
-    // Should round to 123.46
+
     assert_eq!(money.amount(), 12346);
 }
 
 #[test]
 fn test_boundary_near_overflow() {
-    // Test near i64::MAX without overflow
     let money = Money::new(i64::MAX - 1000);
     let small = Money::new(500);
     let result = money.add(&small);
@@ -380,7 +372,6 @@ fn test_boundary_near_overflow() {
 
 #[test]
 fn test_boundary_near_underflow() {
-    // Test near i64::MIN without underflow
     let money = Money::new(i64::MIN + 1000);
     let small = Money::new(-500);
     let result = money.add(&small);
@@ -405,7 +396,6 @@ fn test_from_decimal_negative_zero() {
 
 #[test]
 fn test_round_trip_with_fractional_cents() {
-    // Test that values with fractional cents round-trip correctly
     let original = 99.99;
     let money = Money::from_decimal(original);
     let result = money.to_decimal();
@@ -414,6 +404,6 @@ fn test_round_trip_with_fractional_cents() {
 
 #[test]
 fn test_trillion_dollar_amount() {
-    let money = Money::new(100_000_000_000_00); // $1 trillion (100 trillion cents)
+    let money = Money::new(100_000_000_000_00);
     assert_eq!(money.to_decimal(), 100_000_000_000.0);
 }

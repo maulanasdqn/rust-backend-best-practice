@@ -33,7 +33,6 @@ impl ErrorResponse {
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct SingleResponse<T> {
     pub message: String,
-    #[allow(clippy::option_if_let_else)]
     pub data: T,
     pub version: String,
 }
@@ -84,7 +83,6 @@ impl PaginationMeta {
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ListResponse<T> {
     pub message: String,
-    #[allow(clippy::option_if_let_else)]
     pub data: Vec<T>,
     pub meta: PaginationMeta,
     pub version: String,

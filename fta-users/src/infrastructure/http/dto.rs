@@ -6,7 +6,6 @@ use uuid::Uuid;
 
 use crate::domain::User;
 
-// Response DTOs
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct UserResponse {
     pub id: Uuid,
@@ -30,7 +29,6 @@ impl From<User> for UserResponse {
     }
 }
 
-// Request DTOs
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct CreateUserRequest {
     pub email: String,
@@ -46,7 +44,6 @@ pub struct UpdateUserRequest {
     pub last_name: Option<String>,
 }
 
-// Validation implementations
 impl Validatable for CreateUserRequest {
     fn schema() -> ObjectSchema {
         object()

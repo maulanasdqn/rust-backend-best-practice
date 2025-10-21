@@ -271,7 +271,6 @@ fn test_multiple_detail_updates() {
     assert_eq!(transaction.description, Some("Desc 3".to_string()));
 }
 
-// Edge case tests
 #[test]
 fn test_transaction_with_max_i64_amount() {
     let account_id = Uuid::new_v4();
@@ -475,7 +474,7 @@ fn test_very_large_transaction_amount() {
     let transaction = Transaction::new(
         account_id,
         TransactionType::Income,
-        100_000_000_000_00, // $1 trillion
+        100_000_000_000_00,
         Some("Lottery Win".to_string()),
         None,
         Utc::now(),

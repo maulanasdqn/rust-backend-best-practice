@@ -77,8 +77,8 @@ pub async fn list_budgets_handler(
     let (budgets, total) = use_case.execute(user_id, &params).await?;
     let responses: Vec<BudgetResponse> = budgets.into_iter().map(BudgetResponse::from).collect();
 
-    #[allow(clippy::cast_sign_loss)]
-    let meta = PaginationMeta::new(params.page, params.per_page, total.max(0) as u64);
+    let total_u64 = u64::try_from(total.max(0)).unwrap_or(0);
+    let meta = PaginationMeta::new(params.page, params.per_page, total_u64);
     let response = ListResponse::new(responses, meta);
 
     Ok(Json(response))
