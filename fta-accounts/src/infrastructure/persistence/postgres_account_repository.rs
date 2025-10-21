@@ -86,26 +86,67 @@ impl AccountRepository for PostgresAccountRepository {
         }))
     }
 
-    async fn find_by_user_id(
+    async fn find_all(
         &self,
-        user_id: &Uuid,
+        filters: &crate::infrastructure::http::filters::AccountFilters,
+        sort_by: Option<&str>,
+        sort_order: &str,
         limit: i64,
         offset: i64,
     ) -> Result<Vec<Account>> {
-        let results = sqlx::query(
-            r"
-      SELECT id, user_id, name, account_type, balance, currency, is_active, created_at, updated_at
-      FROM accounts
-      WHERE user_id = $1
-      ORDER BY created_at DESC
-      LIMIT $2 OFFSET $3
-      ",
-        )
-        .bind(user_id)
-        .bind(limit)
-        .bind(offset)
-        .fetch_all(&self.pool)
-        .await?;
+        let mut query_builder = sqlx::QueryBuilder::new(
+            "SELECT id, user_id, name, account_type, balance, currency, is_active, created_at, updated_at \
+             FROM accounts WHERE 1=1",
+        );
+
+        if let Some(user_id) = filters.user_id {
+            query_builder.push(" AND user_id = ");
+            query_builder.push_bind(user_id);
+        }
+
+        if let Some(ref account_type) = filters.account_type {
+            let account_type_str = serde_json::to_string(account_type).unwrap_or_default();
+            query_builder.push(" AND account_type = ");
+            query_builder.push_bind(account_type_str);
+        }
+
+        if let Some(ref currency) = filters.currency {
+            query_builder.push(" AND currency = ");
+            query_builder.push_bind(currency);
+        }
+
+        if let Some(is_active) = filters.is_active {
+            query_builder.push(" AND is_active = ");
+            query_builder.push_bind(is_active);
+        }
+
+        if let Some(min_balance) = filters.min_balance {
+            query_builder.push(" AND balance >= ");
+            query_builder.push_bind(min_balance);
+        }
+
+        if let Some(max_balance) = filters.max_balance {
+            query_builder.push(" AND balance <= ");
+            query_builder.push_bind(max_balance);
+        }
+
+        if let Some(ref name) = filters.name {
+            query_builder.push(" AND name ILIKE ");
+            query_builder.push_bind(format!("%{name}%"));
+        }
+
+        if let Some(sort_field) = sort_by {
+            query_builder.push(format!(" ORDER BY {sort_field} {sort_order}"));
+        } else {
+            query_builder.push(" ORDER BY created_at DESC");
+        }
+
+        query_builder.push(" LIMIT ");
+        query_builder.push_bind(limit);
+        query_builder.push(" OFFSET ");
+        query_builder.push_bind(offset);
+
+        let results = query_builder.build().fetch_all(&self.pool).await?;
 
         Ok(results
             .into_iter()
@@ -128,15 +169,49 @@ impl AccountRepository for PostgresAccountRepository {
             .collect())
     }
 
-    async fn count_by_user_id(&self, user_id: &Uuid) -> Result<i64> {
-        let result: (i64,) = sqlx::query_as(
-            r"
-      SELECT COUNT(*) FROM accounts WHERE user_id = $1
-      ",
-        )
-        .bind(user_id)
-        .fetch_one(&self.pool)
-        .await?;
+    async fn count_all(
+        &self,
+        filters: &crate::infrastructure::http::filters::AccountFilters,
+    ) -> Result<i64> {
+        let mut query_builder = sqlx::QueryBuilder::new("SELECT COUNT(*) FROM accounts WHERE 1=1");
+
+        if let Some(user_id) = filters.user_id {
+            query_builder.push(" AND user_id = ");
+            query_builder.push_bind(user_id);
+        }
+
+        if let Some(ref account_type) = filters.account_type {
+            let account_type_str = serde_json::to_string(account_type).unwrap_or_default();
+            query_builder.push(" AND account_type = ");
+            query_builder.push_bind(account_type_str);
+        }
+
+        if let Some(ref currency) = filters.currency {
+            query_builder.push(" AND currency = ");
+            query_builder.push_bind(currency);
+        }
+
+        if let Some(is_active) = filters.is_active {
+            query_builder.push(" AND is_active = ");
+            query_builder.push_bind(is_active);
+        }
+
+        if let Some(min_balance) = filters.min_balance {
+            query_builder.push(" AND balance >= ");
+            query_builder.push_bind(min_balance);
+        }
+
+        if let Some(max_balance) = filters.max_balance {
+            query_builder.push(" AND balance <= ");
+            query_builder.push_bind(max_balance);
+        }
+
+        if let Some(ref name) = filters.name {
+            query_builder.push(" AND name ILIKE ");
+            query_builder.push_bind(format!("%{name}%"));
+        }
+
+        let result: (i64,) = query_builder.build_query_as().fetch_one(&self.pool).await?;
 
         Ok(result.0)
     }

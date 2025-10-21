@@ -159,19 +159,72 @@ impl UserRepository for PostgresUserRepository {
         })
     }
 
-    async fn find_all(&self, limit: i64, offset: i64) -> Result<Vec<User>> {
-        let results = sqlx::query(
-            r"
-      SELECT id, email, password_hash, first_name, last_name, email_verified, two_factor_enabled, two_factor_secret, oauth_provider, oauth_provider_id, last_login_at, created_at, updated_at
-      FROM users
-      ORDER BY created_at DESC
-      LIMIT $1 OFFSET $2
-      ",
-        )
-        .bind(limit)
-        .bind(offset)
-        .fetch_all(&self.pool)
-        .await?;
+    async fn find_all(
+        &self,
+        filters: &crate::infrastructure::http::filters::UserFilters,
+        sort_by: Option<&str>,
+        sort_order: &str,
+        limit: i64,
+        offset: i64,
+    ) -> Result<Vec<User>> {
+        let mut query_builder = sqlx::QueryBuilder::new(
+            "SELECT id, email, password_hash, first_name, last_name, email_verified, \
+             two_factor_enabled, two_factor_secret, oauth_provider, oauth_provider_id, \
+             last_login_at, created_at, updated_at FROM users WHERE 1=1",
+        );
+
+        if let Some(ref email) = filters.email {
+            query_builder.push(" AND email ILIKE ");
+            query_builder.push_bind(format!("%{email}%"));
+        }
+
+        if let Some(ref first_name) = filters.first_name {
+            query_builder.push(" AND first_name ILIKE ");
+            query_builder.push_bind(format!("%{first_name}%"));
+        }
+
+        if let Some(ref last_name) = filters.last_name {
+            query_builder.push(" AND last_name ILIKE ");
+            query_builder.push_bind(format!("%{last_name}%"));
+        }
+
+        if let Some(verified) = filters.verified_only {
+            query_builder.push(" AND email_verified = ");
+            query_builder.push_bind(verified);
+        }
+
+        if let Some(ref provider) = filters.oauth_provider {
+            query_builder.push(" AND oauth_provider = ");
+            query_builder.push_bind(provider);
+        }
+
+        if let Some(created_after) = filters.created_after {
+            query_builder.push(" AND created_at >= ");
+            query_builder.push_bind(created_after);
+        }
+
+        if let Some(created_before) = filters.created_before {
+            query_builder.push(" AND created_at <= ");
+            query_builder.push_bind(created_before);
+        }
+
+        if let Some(two_factor) = filters.two_factor_enabled {
+            query_builder.push(" AND two_factor_enabled = ");
+            query_builder.push_bind(two_factor);
+        }
+
+        if let Some(sort_field) = sort_by {
+            query_builder.push(format!(" ORDER BY {sort_field} {sort_order}"));
+        } else {
+            query_builder.push(" ORDER BY created_at DESC");
+        }
+
+        query_builder.push(" LIMIT ");
+        query_builder.push_bind(limit);
+        query_builder.push(" OFFSET ");
+        query_builder.push_bind(offset);
+
+        let results = query_builder.build().fetch_all(&self.pool).await?;
 
         Ok(results
             .into_iter()
@@ -193,10 +246,54 @@ impl UserRepository for PostgresUserRepository {
             .collect())
     }
 
-    async fn count_all(&self) -> Result<i64> {
-        let result: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM users")
-            .fetch_one(&self.pool)
-            .await?;
+    async fn count_all(
+        &self,
+        filters: &crate::infrastructure::http::filters::UserFilters,
+    ) -> Result<i64> {
+        let mut query_builder = sqlx::QueryBuilder::new("SELECT COUNT(*) FROM users WHERE 1=1");
+
+        if let Some(ref email) = filters.email {
+            query_builder.push(" AND email ILIKE ");
+            query_builder.push_bind(format!("%{email}%"));
+        }
+
+        if let Some(ref first_name) = filters.first_name {
+            query_builder.push(" AND first_name ILIKE ");
+            query_builder.push_bind(format!("%{first_name}%"));
+        }
+
+        if let Some(ref last_name) = filters.last_name {
+            query_builder.push(" AND last_name ILIKE ");
+            query_builder.push_bind(format!("%{last_name}%"));
+        }
+
+        if let Some(verified) = filters.verified_only {
+            query_builder.push(" AND email_verified = ");
+            query_builder.push_bind(verified);
+        }
+
+        if let Some(ref provider) = filters.oauth_provider {
+            query_builder.push(" AND oauth_provider = ");
+            query_builder.push_bind(provider);
+        }
+
+        if let Some(created_after) = filters.created_after {
+            query_builder.push(" AND created_at >= ");
+            query_builder.push_bind(created_after);
+        }
+
+        if let Some(created_before) = filters.created_before {
+            query_builder.push(" AND created_at <= ");
+            query_builder.push_bind(created_before);
+        }
+
+        if let Some(two_factor) = filters.two_factor_enabled {
+            query_builder.push(" AND two_factor_enabled = ");
+            query_builder.push_bind(two_factor);
+        }
+
+        let result: (i64,) = query_builder.build_query_as().fetch_one(&self.pool).await?;
+
         Ok(result.0)
     }
 

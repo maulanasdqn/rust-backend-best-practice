@@ -1,4 +1,5 @@
 mod api_doc;
+mod health;
 mod logger;
 
 use std::sync::Arc;
@@ -257,7 +258,11 @@ fn init_use_cases(
     }
 }
 
-fn build_router(auth_state: Arc<AuthAppState>, use_cases: UseCases) -> Router {
+fn build_router(
+    auth_state: Arc<AuthAppState>,
+    use_cases: UseCases,
+    db_pool: fta_database::DbPool,
+) -> Router {
     let api_v1 = Router::new()
         .merge(auth_routes(auth_state))
         .merge(user_routes())
@@ -289,6 +294,9 @@ fn build_router(auth_state: Arc<AuthAppState>, use_cases: UseCases) -> Router {
 
     Router::new()
         .route("/", get(redirect_to_docs))
+        .route("/health", get(health::health_check))
+        .route("/ready", get(health::readiness_check))
+        .with_state(Arc::new(db_pool))
         .merge(SwaggerUi::new("/docs").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .nest("/api/v1", api_v1)
         .layer(
@@ -323,7 +331,7 @@ async fn main() -> Result<()> {
         refresh_token_repository,
         email_verification_repository,
         password_reset_token_repository,
-    ) = setup_repositories(db_pool);
+    ) = setup_repositories(db_pool.clone());
 
     let auth_state = setup_auth_state(
         &config,
@@ -340,7 +348,7 @@ async fn main() -> Result<()> {
         budget_repository,
     );
 
-    let app = build_router(auth_state, use_cases);
+    let app = build_router(auth_state, use_cases, db_pool);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
 

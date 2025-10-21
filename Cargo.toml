@@ -8,6 +8,7 @@ members = [
   "fta-errors",
   "fta-migration",
   "fta-server",
+  "fta-test-utils",
   "fta-transactions",
   "fta-types",
   "fta-users",

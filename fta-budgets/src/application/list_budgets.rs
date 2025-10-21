@@ -1,9 +1,9 @@
 use fta_errors::AppError;
-use paginator_rs::PaginationParams;
+use fta_types::PaginationQuery;
 use std::sync::Arc;
-use uuid::Uuid;
 
 use crate::domain::{Budget, BudgetRepository};
+use crate::infrastructure::http::filters::BudgetFilters;
 
 pub struct ListBudgets {
     repository: Arc<dyn BudgetRepository>,
@@ -22,20 +22,24 @@ impl ListBudgets {
 
     pub async fn execute(
         &self,
-        user_id: Uuid,
-        params: &PaginationParams,
+        filters: &BudgetFilters,
+        sort_by: Option<&str>,
+        sort_order: &str,
+        pagination: &PaginationQuery,
     ) -> Result<(Vec<Budget>, i64), AppError> {
         let total = self
             .repository
-            .count_by_user_id(&user_id)
+            .count_all(filters)
             .await
             .map_err(AppError::from)?;
         let budgets = self
             .repository
-            .find_by_user_id(
-                &user_id,
-                i64::from(params.limit()),
-                i64::from(params.offset()),
+            .find_all(
+                filters,
+                sort_by,
+                sort_order,
+                i64::from(pagination.limit()),
+                i64::from(pagination.offset()),
             )
             .await
             .map_err(AppError::from)?;

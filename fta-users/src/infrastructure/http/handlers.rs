@@ -3,8 +3,9 @@ use axum::{
     Extension, Json,
 };
 use fta_errors::AppError;
-use fta_types::{ErrorResponse, ListResponse, PaginationMeta, SingleResponse};
-use paginator_rs::PaginationParams;
+use fta_types::{
+    ErrorResponse, ListResponse, PaginationMeta, PaginationQuery, SingleResponse, SortQuery,
+};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use utoipa::IntoParams;
@@ -13,22 +14,27 @@ use uuid::Uuid;
 use crate::application::{CreateUser, DeleteUser, GetUser, ListUsers, UpdateUser};
 
 use super::dto::{CreateUserRequest, UpdateUserRequest, UserResponse};
+use super::filters::UserFilters;
 
 #[derive(Debug, Deserialize, Serialize, IntoParams)]
-pub struct PaginationQuery {
-    #[serde(default = "default_page")]
-    pub page: u32,
-    #[serde(default = "default_per_page")]
-    pub per_page: u32,
+pub struct ListUsersQuery {
+    #[serde(flatten)]
+    pub pagination: PaginationQuery,
+
+    #[serde(flatten)]
+    pub sort: SortQuery,
+
+    #[serde(flatten)]
+    pub filters: UserFilters,
 }
 
-const fn default_page() -> u32 {
-    1
-}
-
-const fn default_per_page() -> u32 {
-    10
-}
+const ALLOWED_SORT_FIELDS: &[&str] = &[
+    "email",
+    "first_name",
+    "last_name",
+    "created_at",
+    "updated_at",
+];
 
 #[utoipa::path(
   get,
@@ -58,22 +64,39 @@ pub async fn get_user_handler(
   path = "/api/v1/users",
   tag = "Users",
   params(
-    PaginationQuery
+    ListUsersQuery
   ),
   responses(
     (status = 200, description = "List of users retrieved successfully", body = inline(ListResponse<UserResponse>)),
+    (status = 400, description = "Invalid query parameters", body = ErrorResponse),
   )
 )]
 pub async fn list_users_handler(
-    Query(pagination): Query<PaginationQuery>,
+    Query(query): Query<ListUsersQuery>,
     Extension(use_case): Extension<Arc<ListUsers>>,
 ) -> Result<Json<ListResponse<UserResponse>>, AppError> {
-    let params = PaginationParams::new(pagination.page, pagination.per_page);
-    let (users, total) = use_case.execute(&params).await?;
+    query.filters.validate().map_err(AppError::BadRequest)?;
+
+    query
+        .sort
+        .validate(ALLOWED_SORT_FIELDS)
+        .map_err(AppError::BadRequest)?;
+
+    let pagination = query.pagination.validate();
+
+    let (users, total) = use_case
+        .execute(
+            &query.filters,
+            query.sort.sort_by.as_deref(),
+            &query.sort.order.to_string(),
+            &pagination,
+        )
+        .await?;
+
     let responses: Vec<UserResponse> = users.into_iter().map(UserResponse::from).collect();
 
     let total_u64 = u64::try_from(total.max(0)).unwrap_or(0);
-    let meta = PaginationMeta::new(params.page, params.per_page, total_u64);
+    let meta = PaginationMeta::new(pagination.page, pagination.per_page, total_u64);
     let response = ListResponse::new(responses, meta);
 
     Ok(Json(response))

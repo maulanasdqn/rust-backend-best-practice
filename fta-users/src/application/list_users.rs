@@ -1,8 +1,9 @@
 use fta_errors::AppError;
-use paginator_rs::PaginationParams;
+use fta_types::PaginationQuery;
 use std::sync::Arc;
 
 use crate::domain::{User, UserRepository};
+use crate::infrastructure::http::filters::UserFilters;
 
 pub struct ListUsers {
     repository: Arc<dyn UserRepository>,
@@ -19,11 +20,27 @@ impl ListUsers {
         Self { repository }
     }
 
-    pub async fn execute(&self, params: &PaginationParams) -> Result<(Vec<User>, i64), AppError> {
-        let total = self.repository.count_all().await.map_err(AppError::from)?;
+    pub async fn execute(
+        &self,
+        filters: &UserFilters,
+        sort_by: Option<&str>,
+        sort_order: &str,
+        pagination: &PaginationQuery,
+    ) -> Result<(Vec<User>, i64), AppError> {
+        let total = self
+            .repository
+            .count_all(filters)
+            .await
+            .map_err(AppError::from)?;
         let users = self
             .repository
-            .find_all(i64::from(params.limit()), i64::from(params.offset()))
+            .find_all(
+                filters,
+                sort_by,
+                sort_order,
+                i64::from(pagination.limit()),
+                i64::from(pagination.offset()),
+            )
             .await
             .map_err(AppError::from)?;
         Ok((users, total))

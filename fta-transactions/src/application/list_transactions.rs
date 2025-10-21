@@ -1,9 +1,9 @@
 use fta_errors::AppError;
-use paginator_rs::PaginationParams;
+use fta_types::PaginationQuery;
 use std::sync::Arc;
-use uuid::Uuid;
 
 use crate::domain::{Transaction, TransactionRepository};
+use crate::infrastructure::http::filters::TransactionFilters;
 
 pub struct ListTransactions {
     repository: Arc<dyn TransactionRepository>,
@@ -22,20 +22,24 @@ impl ListTransactions {
 
     pub async fn execute(
         &self,
-        account_id: Uuid,
-        params: &PaginationParams,
+        filters: &TransactionFilters,
+        sort_by: Option<&str>,
+        sort_order: &str,
+        pagination: &PaginationQuery,
     ) -> Result<(Vec<Transaction>, i64), AppError> {
         let total = self
             .repository
-            .count_by_account_id(&account_id)
+            .count_all(filters)
             .await
             .map_err(AppError::from)?;
         let transactions = self
             .repository
-            .find_by_account_id(
-                &account_id,
-                i64::from(params.limit()),
-                i64::from(params.offset()),
+            .find_all(
+                filters,
+                sort_by,
+                sort_order,
+                i64::from(pagination.limit()),
+                i64::from(pagination.offset()),
             )
             .await
             .map_err(AppError::from)?;

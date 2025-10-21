@@ -168,6 +168,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "atomic"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a89cbf775b137e9b968e67227ef7f775587cde3fd31b0d8599dbd0f598a48340"
+dependencies = [
+ "bytemuck",
+]
+
+[[package]]
 name = "atomic-waker"
 version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -181,11 +190,45 @@ checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
 
 [[package]]
 name = "axum"
+version = "0.7.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "edca88bc138befd0323b20752846e6587272d3b03b0343c8ea28a6f819e6e71f"
+dependencies = [
+ "async-trait",
+ "axum-core 0.4.5",
+ "bytes",
+ "futures-util",
+ "http",
+ "http-body",
+ "http-body-util",
+ "hyper",
+ "hyper-util",
+ "itoa",
+ "matchit 0.7.3",
+ "memchr",
+ "mime",
+ "percent-encoding",
+ "pin-project-lite",
+ "rustversion",
+ "serde",
+ "serde_json",
+ "serde_path_to_error",
+ "serde_urlencoded",
+ "sync_wrapper",
+ "tokio",
+ "tower",
+ "tower-layer",
+ "tower-service",
+ "tracing",
+]
+
+[[package]]
+name = "axum"
 version = "0.8.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a18ed336352031311f4e0b4dd2ff392d4fbb370777c9d18d7fc9d7359f73871"
 dependencies = [
- "axum-core",
+ "axum-core 0.5.5",
  "axum-macros",
  "base64",
  "bytes",
@@ -197,7 +240,7 @@ dependencies = [
  "hyper",
  "hyper-util",
  "itoa",
- "matchit",
+ "matchit 0.8.4",
  "memchr",
  "mime",
  "multer",
@@ -212,6 +255,27 @@ dependencies = [
  "tokio",
  "tokio-tungstenite",
  "tower",
+ "tower-layer",
+ "tower-service",
+ "tracing",
+]
+
+[[package]]
+name = "axum-core"
+version = "0.4.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09f2bd6146b97ae3359fa0cc6d6b376d9539582c7b4220f041a33ec24c226199"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "futures-util",
+ "http",
+ "http-body",
+ "http-body-util",
+ "mime",
+ "pin-project-lite",
+ "rustversion",
+ "sync_wrapper",
  "tower-layer",
  "tower-service",
  "tracing",
@@ -564,6 +628,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "darling"
+version = "0.20.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc7f46116c46ff9ab3eb1597a45688b6715c6e628b5c133e288e709a29bcb4ee"
+dependencies = [
+ "darling_core",
+ "darling_macro",
+]
+
+[[package]]
+name = "darling_core"
+version = "0.20.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0d00b9596d185e565c2207a0b01f8bd1a135483d02d9b7b0a54b11da8d53412e"
+dependencies = [
+ "fnv",
+ "ident_case",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "darling_macro"
+version = "0.20.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc34b93ccb385b40dc71c6fceac4b2ad23662c7eeb248cf10d529b7e055b6ead"
+dependencies = [
+ "darling_core",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "data-encoding"
 version = "2.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -601,6 +699,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "deunicode"
+version = "1.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "abd57806937c9cc163efc8ea3910e00a62e2aeb0b8119f1793a978088f8f6b04"
+
+[[package]]
 name = "digest"
 version = "0.10.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -628,6 +732,18 @@ name = "dotenvy"
 version = "0.15.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1aaf95b3e5c8f23aa320147307562d361db0ae0d51242340f558153b4eb2439b"
+
+[[package]]
+name = "dummy"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1cac124e13ae9aa56acc4241f8c8207501d93afdd8d8e62f0c1f2e12f6508c65"
+dependencies = [
+ "darling",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "either"
@@ -712,6 +828,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "fake"
+version = "2.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2d391ba4af7f1d93f01fcf7b2f29e2bc9348e109dfdbf4dcbdc51dfa38dab0b6"
+dependencies = [
+ "chrono",
+ "deunicode",
+ "dummy",
+ "rand 0.8.5",
+ "uuid",
+]
+
+[[package]]
 name = "fastrand"
 version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -787,7 +916,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
- "axum",
+ "axum 0.8.6",
  "chrono",
  "fta-database",
  "fta-errors",
@@ -810,7 +939,7 @@ dependencies = [
  "anyhow",
  "argon2",
  "async-trait",
- "axum",
+ "axum 0.8.6",
  "base32",
  "chrono",
  "fta-database",
@@ -842,7 +971,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
- "axum",
+ "axum 0.8.6",
  "chrono",
  "fta-database",
  "fta-errors",
@@ -872,7 +1001,7 @@ name = "fta-errors"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "axum",
+ "axum 0.8.6",
  "fta-types",
  "serde",
  "serde_json",
@@ -897,7 +1026,7 @@ name = "fta-server"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "axum",
+ "axum 0.8.6",
  "dotenvy",
  "fta-accounts",
  "fta-auth",
@@ -907,6 +1036,9 @@ dependencies = [
  "fta-transactions",
  "fta-types",
  "fta-users",
+ "serde",
+ "serde_json",
+ "sqlx",
  "tokio",
  "tower",
  "tower-http",
@@ -919,12 +1051,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "fta-test-utils"
+version = "0.1.0"
+dependencies = [
+ "axum 0.7.9",
+ "chrono",
+ "dotenvy",
+ "fake",
+ "fta-errors",
+ "fta-types",
+ "http-body-util",
+ "rand 0.8.5",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tokio",
+ "tower",
+ "uuid",
+]
+
+[[package]]
 name = "fta-transactions"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
- "axum",
+ "axum 0.8.6",
  "chrono",
  "fta-database",
  "fta-errors",
@@ -960,7 +1113,7 @@ dependencies = [
  "anyhow",
  "argon2",
  "async-trait",
- "axum",
+ "axum 0.8.6",
  "chrono",
  "fta-database",
  "fta-errors",
@@ -981,7 +1134,7 @@ name = "fta-validation"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "axum",
+ "axum 0.8.6",
  "serde",
  "serde_json",
  "zod-rs",
@@ -1463,6 +1616,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "ident_case"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b9e0384b61958566e926dc50660321d12159025e767c18e043daf26b70104c39"
+
+[[package]]
 name = "idna"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1685,6 +1844,12 @@ checksum = "d1525a2a28c7f4fa0fc98bb91ae755d1e2d1505079e05539e35bc876b5d65ae9"
 dependencies = [
  "regex-automata",
 ]
+
+[[package]]
+name = "matchit"
+version = "0.7.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0e7465ac9959cc2b1404e8e2367b43684a6d13790fe23056cc8c6c5a6b7bcb94"
 
 [[package]]
 name = "matchit"
@@ -2404,6 +2569,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cd3c25631629d034ce7cd9940adc9d45762d46de2b0f57193c4443b92c6d4d40"
 dependencies = [
  "once_cell",
+ "ring",
  "rustls-pki-types",
  "rustls-webpki",
  "subtle",
@@ -2743,6 +2909,7 @@ dependencies = [
  "native-tls",
  "once_cell",
  "percent-encoding",
+ "rustls",
  "serde",
  "serde_json",
  "sha2",
@@ -2753,6 +2920,7 @@ dependencies = [
  "tracing",
  "url",
  "uuid",
+ "webpki-roots 0.26.11",
 ]
 
 [[package]]
@@ -3481,7 +3649,7 @@ version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7c25bae5bccc842449ec0c5ddc5cbb6a3a1eaeac4503895dc105a1138f8234a0"
 dependencies = [
- "axum",
+ "axum 0.8.6",
  "paste",
  "tower-layer",
  "tower-service",
@@ -3508,7 +3676,7 @@ version = "9.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d047458f1b5b65237c2f6dc6db136945667f40a7668627b3490b9513a3d43a55"
 dependencies = [
- "axum",
+ "axum 0.8.6",
  "base64",
  "mime_guess",
  "regex",
@@ -3526,9 +3694,12 @@ version = "1.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2f87b8aa10b915a06587d0dec516c282ff295b475d94abf425d62b57710070a2"
 dependencies = [
+ "atomic",
  "getrandom 0.3.3",
  "js-sys",
+ "md-5",
  "serde",
+ "sha1_smol",
  "wasm-bindgen",
 ]
 
@@ -3679,6 +3850,24 @@ checksum = "9367c417a924a74cae129e6a2ae3b47fabb1f8995595ab474029da749a8be120"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "webpki-roots"
+version = "0.26.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "521bc38abb08001b01866da9f51eb7c5d647a19260e00054a8c7fd5f9e57f7a9"
+dependencies = [
+ "webpki-roots 1.0.3",
+]
+
+[[package]]
+name = "webpki-roots"
+version = "1.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "32b130c0d2d49f8b6889abc456e795e82525204f27c42cf767cf0d7734e089b8"
+dependencies = [
+ "rustls-pki-types",
 ]
 
 [[package]]

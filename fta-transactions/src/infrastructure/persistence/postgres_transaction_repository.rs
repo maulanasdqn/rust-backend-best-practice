@@ -1,6 +1,5 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
 use fta_database::DbPool;
 use sqlx::Row;
 use uuid::Uuid;
@@ -89,26 +88,72 @@ impl TransactionRepository for PostgresTransactionRepository {
         }))
     }
 
-    async fn find_by_account_id(
+    async fn find_all(
         &self,
-        account_id: &Uuid,
+        filters: &crate::infrastructure::http::filters::TransactionFilters,
+        sort_by: Option<&str>,
+        sort_order: &str,
         limit: i64,
         offset: i64,
     ) -> Result<Vec<Transaction>> {
-        let results = sqlx::query(
-      r"
-      SELECT id, account_id, transaction_type, amount, category, description, transaction_date, created_at, updated_at
-      FROM transactions
-      WHERE account_id = $1
-      ORDER BY transaction_date DESC
-      LIMIT $2 OFFSET $3
-      ",
-    )
-    .bind(account_id)
-    .bind(limit)
-    .bind(offset)
-    .fetch_all(&self.pool)
-    .await?;
+        let mut query_builder = sqlx::QueryBuilder::new(
+            "SELECT id, account_id, transaction_type, amount, category, description, transaction_date, created_at, updated_at \
+             FROM transactions WHERE 1=1",
+        );
+
+        if let Some(account_id) = filters.account_id {
+            query_builder.push(" AND account_id = ");
+            query_builder.push_bind(account_id);
+        }
+
+        if let Some(ref transaction_type) = filters.transaction_type {
+            let type_str = serde_json::to_string(transaction_type).unwrap_or_default();
+            query_builder.push(" AND transaction_type = ");
+            query_builder.push_bind(type_str);
+        }
+
+        if let Some(ref category) = filters.category {
+            query_builder.push(" AND category = ");
+            query_builder.push_bind(category);
+        }
+
+        if let Some(min_amount) = filters.min_amount {
+            query_builder.push(" AND amount >= ");
+            query_builder.push_bind(min_amount);
+        }
+
+        if let Some(max_amount) = filters.max_amount {
+            query_builder.push(" AND amount <= ");
+            query_builder.push_bind(max_amount);
+        }
+
+        if let Some(start_date) = filters.start_date {
+            query_builder.push(" AND transaction_date >= ");
+            query_builder.push_bind(start_date);
+        }
+
+        if let Some(end_date) = filters.end_date {
+            query_builder.push(" AND transaction_date <= ");
+            query_builder.push_bind(end_date);
+        }
+
+        if let Some(ref search) = filters.search {
+            query_builder.push(" AND description ILIKE ");
+            query_builder.push_bind(format!("%{search}%"));
+        }
+
+        if let Some(sort_field) = sort_by {
+            query_builder.push(format!(" ORDER BY {sort_field} {sort_order}"));
+        } else {
+            query_builder.push(" ORDER BY transaction_date DESC");
+        }
+
+        query_builder.push(" LIMIT ");
+        query_builder.push_bind(limit);
+        query_builder.push(" OFFSET ");
+        query_builder.push_bind(offset);
+
+        let results = query_builder.build().fetch_all(&self.pool).await?;
 
         Ok(results
             .into_iter()
@@ -132,59 +177,57 @@ impl TransactionRepository for PostgresTransactionRepository {
             .collect())
     }
 
-    async fn count_by_account_id(&self, account_id: &Uuid) -> Result<i64> {
-        let result: (i64,) = sqlx::query_as(
-            r"
-      SELECT COUNT(*) FROM transactions WHERE account_id = $1
-      ",
-        )
-        .bind(account_id)
-        .fetch_one(&self.pool)
-        .await?;
+    async fn count_all(
+        &self,
+        filters: &crate::infrastructure::http::filters::TransactionFilters,
+    ) -> Result<i64> {
+        let mut query_builder =
+            sqlx::QueryBuilder::new("SELECT COUNT(*) FROM transactions WHERE 1=1");
+
+        if let Some(account_id) = filters.account_id {
+            query_builder.push(" AND account_id = ");
+            query_builder.push_bind(account_id);
+        }
+
+        if let Some(ref transaction_type) = filters.transaction_type {
+            let type_str = serde_json::to_string(transaction_type).unwrap_or_default();
+            query_builder.push(" AND transaction_type = ");
+            query_builder.push_bind(type_str);
+        }
+
+        if let Some(ref category) = filters.category {
+            query_builder.push(" AND category = ");
+            query_builder.push_bind(category);
+        }
+
+        if let Some(min_amount) = filters.min_amount {
+            query_builder.push(" AND amount >= ");
+            query_builder.push_bind(min_amount);
+        }
+
+        if let Some(max_amount) = filters.max_amount {
+            query_builder.push(" AND amount <= ");
+            query_builder.push_bind(max_amount);
+        }
+
+        if let Some(start_date) = filters.start_date {
+            query_builder.push(" AND transaction_date >= ");
+            query_builder.push_bind(start_date);
+        }
+
+        if let Some(end_date) = filters.end_date {
+            query_builder.push(" AND transaction_date <= ");
+            query_builder.push_bind(end_date);
+        }
+
+        if let Some(ref search) = filters.search {
+            query_builder.push(" AND description ILIKE ");
+            query_builder.push_bind(format!("%{search}%"));
+        }
+
+        let result: (i64,) = query_builder.build_query_as().fetch_one(&self.pool).await?;
 
         Ok(result.0)
-    }
-
-    async fn find_by_date_range(
-        &self,
-        account_id: &Uuid,
-        start_date: &DateTime<Utc>,
-        end_date: &DateTime<Utc>,
-    ) -> Result<Vec<Transaction>> {
-        let results = sqlx::query(
-      r"
-      SELECT id, account_id, transaction_type, amount, category, description, transaction_date, created_at, updated_at
-      FROM transactions
-      WHERE account_id = $1 AND transaction_date BETWEEN $2 AND $3
-      ORDER BY transaction_date DESC
-      ",
-    )
-    .bind(account_id)
-    .bind(start_date)
-    .bind(end_date)
-    .fetch_all(&self.pool)
-    .await?;
-
-        Ok(results
-            .into_iter()
-            .map(|row| {
-                let transaction_type: TransactionType =
-                    serde_json::from_str(row.get("transaction_type"))
-                        .unwrap_or(TransactionType::Expense);
-
-                Transaction {
-                    id: row.get("id"),
-                    account_id: row.get("account_id"),
-                    transaction_type,
-                    amount: row.get("amount"),
-                    category: row.get("category"),
-                    description: row.get("description"),
-                    transaction_date: row.get("transaction_date"),
-                    created_at: row.get("created_at"),
-                    updated_at: row.get("updated_at"),
-                }
-            })
-            .collect())
     }
 
     async fn update(&self, transaction: Transaction) -> Result<Transaction> {
