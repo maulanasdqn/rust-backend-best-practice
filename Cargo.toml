@@ -26,8 +26,10 @@ google-oauth = "1.11"
 jsonwebtoken = "9.3.0"
 lettre = { version = "0.11", features = ["tokio1-native-tls"] }
 oauth2 = "4.4.1"
-paginator-rs = "0.2.0"
-paginator-utils = "0.2.0"
+paginator-rs = "0.2.1"
+paginator-utils = "0.2.1"
+paginator-sqlx = { version = "0.2.1", features = ["postgres", "runtime-tokio"] }
+paginator-axum = "0.2.1"
 redis = { version = "0.32.0", features = [
   "aio",
   "connection-manager",

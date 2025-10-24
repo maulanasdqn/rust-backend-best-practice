@@ -922,7 +922,9 @@ dependencies = [
  "fta-errors",
  "fta-types",
  "fta-validation",
+ "paginator-axum",
  "paginator-rs",
+ "paginator-sqlx",
  "paginator-utils",
  "serde",
  "serde_json",
@@ -977,7 +979,9 @@ dependencies = [
  "fta-errors",
  "fta-types",
  "fta-validation",
+ "paginator-axum",
  "paginator-rs",
+ "paginator-sqlx",
  "paginator-utils",
  "serde",
  "serde_json",
@@ -1083,7 +1087,9 @@ dependencies = [
  "fta-errors",
  "fta-types",
  "fta-validation",
+ "paginator-axum",
  "paginator-rs",
+ "paginator-sqlx",
  "paginator-utils",
  "serde",
  "serde_json",
@@ -1098,6 +1104,7 @@ name = "fta-types"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "paginator-axum",
  "paginator-rs",
  "paginator-utils",
  "serde",
@@ -1119,7 +1126,9 @@ dependencies = [
  "fta-errors",
  "fta-types",
  "fta-validation",
+ "paginator-axum",
  "paginator-rs",
+ "paginator-sqlx",
  "paginator-utils",
  "serde",
  "serde_json",
@@ -2101,10 +2110,25 @@ dependencies = [
 ]
 
 [[package]]
-name = "paginator-rs"
-version = "0.2.0"
+name = "paginator-axum"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67982a2f603374de56496e1d8612bd78bbd8b54b0013e4fdfb1569c9fa6a871f"
+checksum = "f81c25bcda80dd5e72522e1c6dcec4e0e99d32885127369e57f55a63d3da7cea"
+dependencies = [
+ "async-trait",
+ "axum 0.7.9",
+ "http",
+ "paginator-rs",
+ "paginator-utils",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "paginator-rs"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "273af93f679db098d0c586dab997bbdb5a21b6dbd445bf26d15943d16b3dcf21"
 dependencies = [
  "paginator-utils",
  "serde",
@@ -2112,11 +2136,24 @@ dependencies = [
 ]
 
 [[package]]
-name = "paginator-utils"
-version = "0.2.0"
+name = "paginator-sqlx"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "05a664c5b8c54c3738e7d2026c526528d4ef490af94fc6acfe4a9713f128d834"
+checksum = "6596c8c8fcf7eb33f70f5b824984ac30df7cc5bab383002ee189d770a85fada3"
 dependencies = [
+ "paginator-rs",
+ "paginator-utils",
+ "serde",
+ "sqlx",
+]
+
+[[package]]
+name = "paginator-utils"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "176773e1fe3e5c9a5ff12f248a3ea9e1710978502e1516cffaf51634f5972991"
+dependencies = [
+ "base64",
  "serde",
  "serde_json",
 ]

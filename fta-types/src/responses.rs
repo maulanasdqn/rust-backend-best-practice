@@ -1,5 +1,6 @@
 #![allow(clippy::option_if_let_else)]
 
+use paginator_utils::PaginatorResponseMeta;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -76,6 +77,34 @@ impl PaginationMeta {
             per_page,
             total_pages,
             total_data,
+        }
+    }
+
+    /// Create from paginator-rs metadata
+    #[must_use]
+    #[allow(clippy::cast_possible_truncation)]
+    pub fn from_paginator_metadata(metadata: &PaginatorResponseMeta) -> Self {
+        Self {
+            page: metadata.page,
+            per_page: metadata.per_page,
+            total_pages: metadata.total_pages.unwrap_or(0),
+            total_data: u64::from(metadata.total.unwrap_or(0)),
+        }
+    }
+
+    /// Convert to paginator-rs metadata
+    #[must_use]
+    #[allow(clippy::cast_possible_truncation)]
+    pub fn to_paginator_metadata(&self) -> PaginatorResponseMeta {
+        PaginatorResponseMeta {
+            page: self.page,
+            per_page: self.per_page,
+            total: Some(self.total_data as u32),
+            total_pages: Some(self.total_pages),
+            has_next: self.page < self.total_pages,
+            has_prev: self.page > 1,
+            next_cursor: None,
+            prev_cursor: None,
         }
     }
 }

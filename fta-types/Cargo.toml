@@ -7,6 +7,7 @@ edition = "2021"
 chrono.workspace = true
 paginator-rs.workspace = true
 paginator-utils.workspace = true
+paginator-axum.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 utoipa.workspace = true

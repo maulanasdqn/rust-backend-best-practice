@@ -1,3 +1,4 @@
+use paginator_rs::PaginationParams as PaginatorParams;
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
@@ -61,6 +62,21 @@ impl PaginationQuery {
 
     pub const fn limit(&self) -> u32 {
         self.per_page
+    }
+
+    /// Convert to paginator-rs PaginationParams
+    #[must_use]
+    pub fn to_paginator_params(&self) -> PaginatorParams {
+        PaginatorParams::new(self.page, self.per_page)
+    }
+
+    /// Create from paginator-rs PaginationParams
+    #[must_use]
+    pub const fn from_paginator_params(params: &PaginatorParams) -> Self {
+        Self {
+            page: params.page,
+            per_page: params.per_page,
+        }
     }
 }
 
@@ -165,6 +181,18 @@ mod tests {
         let query = PaginationQuery::new(0, 200).validate();
         assert_eq!(query.page, 1);
         assert_eq!(query.per_page, 100);
+    }
+
+    #[test]
+    fn test_paginator_params_conversion() {
+        let query = PaginationQuery::new(2, 25);
+        let params = query.to_paginator_params();
+        assert_eq!(params.page, 2);
+        assert_eq!(params.per_page, 25);
+
+        let converted_back = PaginationQuery::from_paginator_params(&params);
+        assert_eq!(converted_back.page, 2);
+        assert_eq!(converted_back.per_page, 25);
     }
 
     #[test]

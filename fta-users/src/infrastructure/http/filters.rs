@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use fta_types::{Filter, FilterBuilder, FilterValue};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
@@ -42,6 +43,60 @@ impl UserFilters {
 
         Ok(())
     }
+
+    /// Convert UserFilters to paginator-rs Filter types
+    pub fn to_paginator_filters(&self) -> Vec<Filter> {
+        let mut filters = Vec::new();
+
+        if let Some(ref email) = self.email {
+            filters.push(FilterBuilder::ilike("email", format!("%{email}%")));
+        }
+
+        if let Some(ref first_name) = self.first_name {
+            filters.push(FilterBuilder::ilike("first_name", format!("%{first_name}%")));
+        }
+
+        if let Some(ref last_name) = self.last_name {
+            filters.push(FilterBuilder::ilike("last_name", format!("%{last_name}%")));
+        }
+
+        if let Some(verified) = self.verified_only {
+            filters.push(FilterBuilder::eq(
+                "email_verified",
+                FilterValue::Bool(verified),
+            ));
+        }
+
+        if let Some(ref provider) = self.oauth_provider {
+            filters.push(FilterBuilder::eq(
+                "oauth_provider",
+                FilterValue::String(provider.clone()),
+            ));
+        }
+
+        if let Some(created_after) = self.created_after {
+            filters.push(FilterBuilder::gte(
+                "created_at",
+                FilterValue::String(created_after.to_rfc3339()),
+            ));
+        }
+
+        if let Some(created_before) = self.created_before {
+            filters.push(FilterBuilder::lte(
+                "created_at",
+                FilterValue::String(created_before.to_rfc3339()),
+            ));
+        }
+
+        if let Some(two_factor) = self.two_factor_enabled {
+            filters.push(FilterBuilder::eq(
+                "two_factor_enabled",
+                FilterValue::Bool(two_factor),
+            ));
+        }
+
+        filters
+    }
 }
 
 #[cfg(test)]
@@ -75,5 +130,25 @@ mod tests {
             ..Default::default()
         };
         assert!(filters.validate().is_ok());
+    }
+
+    #[test]
+    fn test_user_filters_to_paginator_filters() {
+        let filters = UserFilters {
+            email: Some("john@example.com".to_string()),
+            verified_only: Some(true),
+            two_factor_enabled: Some(false),
+            ..Default::default()
+        };
+
+        let paginator_filters = filters.to_paginator_filters();
+        assert_eq!(paginator_filters.len(), 3);
+    }
+
+    #[test]
+    fn test_empty_filters_to_paginator() {
+        let filters = UserFilters::default();
+        let paginator_filters = filters.to_paginator_filters();
+        assert!(paginator_filters.is_empty());
     }
 }
