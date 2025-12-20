@@ -126,6 +126,6 @@ mod tests {
             .unwrap();
 
         assert!(uri.starts_with("otpauth://totp/"));
-        assert!(uri.contains("test@example.com"));
+        assert!(uri.contains("test%40example.com"));
     }
 }

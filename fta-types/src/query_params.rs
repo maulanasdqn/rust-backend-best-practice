@@ -64,13 +64,11 @@ impl PaginationQuery {
         self.per_page
     }
 
-    /// Convert to paginator-rs PaginationParams
     #[must_use]
     pub fn to_paginator_params(&self) -> PaginatorParams {
         PaginatorParams::new(self.page, self.per_page)
     }
 
-    /// Create from paginator-rs PaginationParams
     #[must_use]
     pub const fn from_paginator_params(params: &PaginatorParams) -> Self {
         Self {

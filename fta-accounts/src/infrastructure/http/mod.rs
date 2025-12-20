@@ -1,6 +1,7 @@
 pub mod dto;
 pub mod filters;
 pub mod handlers;
+pub mod query;
 mod routes;
 
 pub use dto::{AccountResponse, CreateAccountRequest, UpdateAccountRequest};

@@ -1,50 +1,25 @@
-use super::dto::{BudgetResponse, CreateBudgetRequest, UpdateBudgetRequest};
-use super::filters::BudgetFilters;
-use crate::application::{
-    CreateBudget, DeactivateBudget, DeleteBudget, GetBudget, ListBudgets, UpdateBudget,
-};
 use axum::{
     extract::{Path, Query},
     Extension, Json,
 };
 use chrono::Utc;
 use fta_errors::AppError;
-use fta_types::{
-    ErrorResponse, ListResponse, PaginationMeta, PaginationQuery, SingleResponse, SortQuery,
-};
-use serde::{Deserialize, Serialize};
+use fta_types::{ErrorResponse, ListResponse, PaginationMeta, SingleResponse};
 use std::sync::Arc;
-use utoipa::IntoParams;
 use uuid::Uuid;
 
-#[derive(Debug, Deserialize, Serialize, IntoParams)]
-pub struct ListBudgetsQuery {
-    #[serde(flatten)]
-    pub pagination: PaginationQuery,
+use crate::application::{
+    CreateBudget, DeactivateBudget, DeleteBudget, GetBudget, ListBudgets, UpdateBudget,
+};
 
-    #[serde(flatten)]
-    pub sort: SortQuery,
-
-    #[serde(flatten)]
-    pub filters: BudgetFilters,
-}
-
-const ALLOWED_SORT_FIELDS: &[&str] = &[
-    "category",
-    "amount",
-    "period",
-    "start_date",
-    "created_at",
-    "updated_at",
-];
+use super::dto::{BudgetResponse, CreateBudgetRequest, UpdateBudgetRequest};
+use super::query::{ListBudgetsQuery, ALLOWED_SORT_FIELDS};
 
 #[utoipa::path(
   get,
   path = "/api/v1/budgets/{id}",
   tag = "Budgets",
-  params(
-    ("id" = Uuid, Path, description = "Budget ID")
-  ),
+  params(("id" = Uuid, Path, description = "Budget ID")),
   responses(
     (status = 200, description = "Budget found successfully", body = inline(SingleResponse<BudgetResponse>)),
     (status = 404, description = "Budget not found", body = ErrorResponse,
@@ -67,9 +42,7 @@ pub async fn get_budget_handler(
   get,
   path = "/api/v1/budgets",
   tag = "Budgets",
-  params(
-    ListBudgetsQuery
-  ),
+  params(ListBudgetsQuery),
   responses(
     (status = 200, description = "List of budgets retrieved successfully", body = inline(ListResponse<BudgetResponse>)),
     (status = 400, description = "Invalid query parameters", body = ErrorResponse),
@@ -80,14 +53,12 @@ pub async fn list_budgets_handler(
     Extension(use_case): Extension<Arc<ListBudgets>>,
 ) -> Result<Json<ListResponse<BudgetResponse>>, AppError> {
     query.filters.validate().map_err(AppError::BadRequest)?;
-
     query
         .sort
         .validate(ALLOWED_SORT_FIELDS)
         .map_err(AppError::BadRequest)?;
 
     let pagination = query.pagination.validate();
-
     let (budgets, total) = use_case
         .execute(
             &query.filters,
@@ -98,20 +69,17 @@ pub async fn list_budgets_handler(
         .await?;
 
     let responses: Vec<BudgetResponse> = budgets.into_iter().map(BudgetResponse::from).collect();
-
     let total_u64 = u64::try_from(total.max(0)).unwrap_or(0);
     let meta = PaginationMeta::new(pagination.page, pagination.per_page, total_u64);
-    let response = ListResponse::new(responses, meta);
-    Ok(Json(response))
+
+    Ok(Json(ListResponse::new(responses, meta)))
 }
 
 #[utoipa::path(
   post,
   path = "/api/v1/users/{user_id}/budgets",
   tag = "Budgets",
-  params(
-    ("user_id" = Uuid, Path, description = "User ID")
-  ),
+  params(("user_id" = Uuid, Path, description = "User ID")),
   request_body = CreateBudgetRequest,
   responses(
     (status = 201, description = "Budget created successfully", body = inline(SingleResponse<BudgetResponse>)),
@@ -142,9 +110,7 @@ pub async fn create_budget_handler(
   put,
   path = "/api/v1/budgets/{id}",
   tag = "Budgets",
-  params(
-    ("id" = Uuid, Path, description = "Budget ID")
-  ),
+  params(("id" = Uuid, Path, description = "Budget ID")),
   request_body = UpdateBudgetRequest,
   responses(
     (status = 200, description = "Budget updated successfully", body = inline(SingleResponse<BudgetResponse>)),
@@ -169,9 +135,7 @@ pub async fn update_budget_handler(
   patch,
   path = "/api/v1/budgets/{id}/deactivate",
   tag = "Budgets",
-  params(
-    ("id" = Uuid, Path, description = "Budget ID")
-  ),
+  params(("id" = Uuid, Path, description = "Budget ID")),
   responses(
     (status = 200, description = "Budget deactivated successfully", body = inline(SingleResponse<BudgetResponse>)),
     (status = 404, description = "Budget not found", body = ErrorResponse,
@@ -194,9 +158,7 @@ pub async fn deactivate_budget_handler(
   delete,
   path = "/api/v1/budgets/{id}",
   tag = "Budgets",
-  params(
-    ("id" = Uuid, Path, description = "Budget ID")
-  ),
+  params(("id" = Uuid, Path, description = "Budget ID")),
   responses(
     (status = 204, description = "Budget deleted successfully"),
     (status = 404, description = "Budget not found", body = ErrorResponse,
@@ -208,6 +170,8 @@ pub async fn delete_budget_handler(
     Extension(use_case): Extension<Arc<DeleteBudget>>,
 ) -> Result<Json<SingleResponse<()>>, AppError> {
     use_case.execute(id).await?;
-    let response = SingleResponse::with_message("Budget deleted successfully", ());
-    Ok(Json(response))
+    Ok(Json(SingleResponse::with_message(
+        "Budget deleted successfully",
+        (),
+    )))
 }

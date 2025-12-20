@@ -2,8 +2,6 @@
 set -e
 
 echo "Starting Financial Tracker API..."
-
-# Wait for database to be ready
 echo "Waiting for database to be ready..."
 until pg_isready -h db -p 5432 -U postgres; do
   echo "Database is unavailable - sleeping"
@@ -11,8 +9,6 @@ until pg_isready -h db -p 5432 -U postgres; do
 done
 
 echo "Database is ready!"
-
-# Run database migrations
 echo "Running database migrations..."
 if [ -z "${SKIP_MIGRATIONS}" ]; then
   /fta-migration || {
@@ -27,6 +23,5 @@ else
   echo "Skipping migrations (SKIP_MIGRATIONS is set)"
 fi
 
-# Start the API server
 echo "Starting API server..."
 exec /fta-server

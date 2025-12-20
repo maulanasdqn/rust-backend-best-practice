@@ -80,7 +80,6 @@ impl PaginationMeta {
         }
     }
 
-    /// Create from paginator-rs metadata
     #[must_use]
     #[allow(clippy::cast_possible_truncation)]
     pub fn from_paginator_metadata(metadata: &PaginatorResponseMeta) -> Self {
@@ -92,7 +91,6 @@ impl PaginationMeta {
         }
     }
 
-    /// Convert to paginator-rs metadata
     #[must_use]
     #[allow(clippy::cast_possible_truncation)]
     pub fn to_paginator_metadata(&self) -> PaginatorResponseMeta {

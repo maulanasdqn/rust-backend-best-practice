@@ -1,4 +1,3 @@
-// Re-export all paginator-rs and paginator-utils types for convenience
 pub use paginator_rs::PaginationParams as PaginatorParams;
 pub use paginator_utils::{
     Cursor, CursorDirection, CursorValue, Filter, FilterOperator, FilterValue,
@@ -8,7 +7,6 @@ pub use paginator_utils::{
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
-/// Builder for creating PaginationParams with fluent API
 #[derive(Debug, Clone, Default, Deserialize, Serialize, IntoParams, ToSchema)]
 pub struct PaginationBuilder {
     #[serde(default = "default_page")]
@@ -50,7 +48,6 @@ impl PaginationBuilder {
         }
     }
 
-    /// Build PaginatorParams from the builder
     #[must_use]
     pub fn build(&self) -> PaginatorParams {
         let mut params = PaginatorParams::new(self.page, self.per_page);
@@ -90,7 +87,6 @@ impl PaginationBuilder {
         params
     }
 
-    /// Build with filters added
     #[must_use]
     pub fn build_with_filters(self, filters: Vec<Filter>) -> PaginatorParams {
         self.build().with_filters(filters)
@@ -105,7 +101,6 @@ const fn default_per_page() -> u32 {
     10
 }
 
-/// Helper to create common filters
 #[derive(Debug)]
 pub struct FilterBuilder;
 

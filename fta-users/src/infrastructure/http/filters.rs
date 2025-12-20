@@ -44,7 +44,6 @@ impl UserFilters {
         Ok(())
     }
 
-    /// Convert UserFilters to paginator-rs Filter types
     pub fn to_paginator_filters(&self) -> Vec<Filter> {
         let mut filters = Vec::new();
 
