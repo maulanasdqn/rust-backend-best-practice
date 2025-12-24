@@ -3,7 +3,7 @@ services:
     image: postgres:16-alpine
     container_name: financial-tracker-db
     ports:
-      - "7778:5432"
+      - "127.0.0.1:7778:5432"
     environment:
       POSTGRES_DB: financial_tracker
       POSTGRES_USER: postgres
@@ -25,7 +25,7 @@ services:
       dockerfile: Dockerfile
     container_name: financial-tracker-api
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/financial_tracker
       RUST_LOG: ${RUST_LOG:-info,sqlx=warn,tower_http=debug,axum=debug,fta_server=debug}
