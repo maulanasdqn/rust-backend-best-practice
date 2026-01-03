@@ -1,1 +1,1 @@
-pub use sqlx;
+pub use sea_orm;

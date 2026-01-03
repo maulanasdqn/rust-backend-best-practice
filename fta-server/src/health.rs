@@ -1,5 +1,6 @@
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
-use fta_database::DbPool;
+use fta_database::{sea_orm, DbPool};
+use sea_orm::{ConnectionTrait, DbBackend, Statement};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -23,7 +24,10 @@ pub async fn health_check() -> impl IntoResponse {
 }
 
 pub async fn readiness_check(State(pool): State<Arc<DbPool>>) -> impl IntoResponse {
-    match sqlx::query("SELECT 1").fetch_one(pool.as_ref()).await {
+    match pool
+        .execute(Statement::from_string(DbBackend::Postgres, "SELECT 1"))
+        .await
+    {
         Ok(_) => (
             StatusCode::OK,
             Json(ReadinessResponse {
@@ -40,7 +44,7 @@ pub async fn readiness_check(State(pool): State<Arc<DbPool>>) -> impl IntoRespon
                     database: "disconnected".to_string(),
                 }),
             )
-        },
+        }
     }
 }
 

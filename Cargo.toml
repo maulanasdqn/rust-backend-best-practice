@@ -28,7 +28,14 @@ lettre = { version = "0.11", features = ["tokio1-native-tls"] }
 oauth2 = "4.4.1"
 paginator-rs = "0.2.1"
 paginator-utils = "0.2.1"
-paginator-sqlx = { version = "0.2.1", features = ["postgres", "runtime-tokio"] }
+sea-orm = { version = "1.1", features = [
+  "sqlx-postgres",
+  "runtime-tokio-native-tls",
+  "macros",
+  "with-chrono",
+  "with-uuid",
+  "with-json",
+] }
 paginator-axum = "0.2.1"
 redis = { version = "0.32.0", features = [
   "aio",
@@ -38,18 +45,6 @@ redis = { version = "0.32.0", features = [
 reqwest = { version = "0.12", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-sqlx = { version = "0.8", features = [
-  "bigdecimal",
-  "chrono",
-  "derive",
-  "json",
-  "macros",
-  "migrate",
-  "postgres",
-  "runtime-tokio",
-  "tls-native-tls",
-  "uuid",
-] }
 tokio = { version = "1.45.1", features = ["full"] }
 tower = { version = "0.5", features = ["retry", "util"] }
 tower-http = { version = "0.6.6", features = ["cors", "trace"] }

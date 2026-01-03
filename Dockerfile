@@ -1,53 +1,48 @@
-FROM rust:1.85-alpine AS builder
-
-RUN apk update && apk add --no-cache \
-    musl-dev \
-    openssl-dev \
-    openssl-libs-static \
-    curl \
-    pkgconfig \
-    libc6-compat
-
-RUN cargo install sqlx-cli --no-default-features --features postgres,native-tls
+FROM rust:1-bookworm AS builder
 
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY Cargo.toml Cargo.lock ./
+COPY fta-accounts ./fta-accounts
+COPY fta-auth ./fta-auth
+COPY fta-budgets ./fta-budgets
+COPY fta-database ./fta-database
+COPY fta-errors ./fta-errors
+COPY fta-migration ./fta-migration
+COPY fta-server ./fta-server
+COPY fta-test-utils ./fta-test-utils
+COPY fta-transactions ./fta-transactions
+COPY fta-types ./fta-types
+COPY fta-users ./fta-users
+COPY fta-validation ./fta-validation
 
-COPY fta-accounts/Cargo.toml ./fta-accounts/
-COPY fta-auth/Cargo.toml ./fta-auth/
-COPY fta-budgets/Cargo.toml ./fta-budgets/
-COPY fta-database/Cargo.toml ./fta-database/
-COPY fta-errors/Cargo.toml ./fta-errors/
-COPY fta-migration/Cargo.toml ./fta-migration/
-COPY fta-server/Cargo.toml ./fta-server/
-COPY fta-transactions/Cargo.toml ./fta-transactions/
-COPY fta-types/Cargo.toml ./fta-types/
-COPY fta-users/Cargo.toml ./fta-users/
-COPY fta-validation/Cargo.toml ./fta-validation/
+RUN cargo build --release -p fta-server
+RUN cargo build --release -p fta-migration
 
-COPY . .
+FROM debian:bookworm-slim
 
-ENV OPENSSL_STATIC=true
-RUN rustup target add x86_64-unknown-linux-musl
-RUN cargo build --release --bin fta-server --target x86_64-unknown-linux-musl
-RUN cargo build --release --bin fta-migration --target x86_64-unknown-linux-musl
-
-FROM alpine:3.19
-
-RUN apk update && apk add --no-cache \
+RUN apt-get update && apt-get install -y \
     ca-certificates \
-    postgresql-client \
-    libc6-compat
+    libssl3 \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/fta-server /fta-server
-COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/fta-migration /fta-migration
-COPY --from=builder /usr/local/cargo/bin/sqlx /sqlx
-COPY --from=builder /app/fta-migration/migrations /migrations
+RUN useradd -m -u 1001 -s /bin/bash appuser
 
-COPY docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
+WORKDIR /app
+
+COPY --from=builder /app/target/release/fta-server /usr/local/bin/fta-server
+COPY --from=builder /app/target/release/fta-migration /usr/local/bin/fta-migration
+
+RUN chown -R appuser:appuser /app
+
+USER appuser
 
 EXPOSE 3000
 
-ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["fta-server"]

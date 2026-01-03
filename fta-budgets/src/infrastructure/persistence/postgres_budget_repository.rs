@@ -1,73 +1,26 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use fta_database::DbPool;
-use sqlx::{postgres::PgRow, Row};
+use fta_database::{entities::budgets, sea_orm, DbPool};
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder, Set,
+};
 use uuid::Uuid;
 
 use crate::domain::{Budget, BudgetPeriod, BudgetRepository};
 use crate::infrastructure::http::filters::BudgetFilters;
 
-const BUDGET_COLUMNS: &str =
-    "id, user_id, category, amount, period, start_date, end_date, is_active, created_at, updated_at";
-
-fn row_to_budget(row: PgRow) -> Budget {
+fn model_to_budget(model: budgets::Model) -> Budget {
     Budget {
-        id: row.get("id"),
-        user_id: row.get("user_id"),
-        category: row.get("category"),
-        amount: row.get("amount"),
-        period: serde_json::from_str(row.get("period")).unwrap_or(BudgetPeriod::Monthly),
-        start_date: row.get("start_date"),
-        end_date: row.get("end_date"),
-        is_active: row.get("is_active"),
-        created_at: row.get("created_at"),
-        updated_at: row.get("updated_at"),
-    }
-}
-
-fn apply_filters<'a>(
-    query_builder: &mut sqlx::QueryBuilder<'a, sqlx::Postgres>,
-    filters: &'a BudgetFilters,
-) {
-    if let Some(user_id) = filters.user_id {
-        query_builder.push(" AND user_id = ");
-        query_builder.push_bind(user_id);
-    }
-
-    if let Some(ref category) = filters.category {
-        query_builder.push(" AND category = ");
-        query_builder.push_bind(category);
-    }
-
-    if let Some(ref period) = filters.period {
-        let period_str = serde_json::to_string(period).unwrap_or_default();
-        query_builder.push(" AND period = ");
-        query_builder.push_bind(period_str);
-    }
-
-    if let Some(is_active) = filters.is_active {
-        query_builder.push(" AND is_active = ");
-        query_builder.push_bind(is_active);
-    }
-
-    if let Some(min_amount) = filters.min_amount {
-        query_builder.push(" AND amount >= ");
-        query_builder.push_bind(min_amount);
-    }
-
-    if let Some(max_amount) = filters.max_amount {
-        query_builder.push(" AND amount <= ");
-        query_builder.push_bind(max_amount);
-    }
-
-    if let Some(start_after) = filters.start_after {
-        query_builder.push(" AND start_date >= ");
-        query_builder.push_bind(start_after);
-    }
-
-    if let Some(start_before) = filters.start_before {
-        query_builder.push(" AND start_date <= ");
-        query_builder.push_bind(start_before);
+        id: model.id,
+        user_id: model.user_id,
+        category: model.category,
+        amount: model.amount,
+        period: serde_json::from_str(&model.period).unwrap_or(BudgetPeriod::Monthly),
+        start_date: model.start_date,
+        end_date: model.end_date,
+        is_active: model.is_active,
+        created_at: model.created_at,
+        updated_at: model.updated_at,
     }
 }
 
@@ -77,7 +30,7 @@ pub struct PostgresBudgetRepository {
 }
 
 impl PostgresBudgetRepository {
-    pub const fn new(pool: DbPool) -> Self {
+    pub fn new(pool: DbPool) -> Self {
         Self { pool }
     }
 }
@@ -86,37 +39,27 @@ impl PostgresBudgetRepository {
 impl BudgetRepository for PostgresBudgetRepository {
     async fn create(&self, budget: Budget) -> Result<Budget> {
         let period_str = serde_json::to_string(&budget.period)?;
-        let query = format!(
-            "INSERT INTO budgets ({BUDGET_COLUMNS}) \
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING {BUDGET_COLUMNS}"
-        );
 
-        let result = sqlx::query(&query)
-            .bind(budget.id)
-            .bind(budget.user_id)
-            .bind(&budget.category)
-            .bind(budget.amount)
-            .bind(period_str)
-            .bind(budget.start_date)
-            .bind(budget.end_date)
-            .bind(budget.is_active)
-            .bind(budget.created_at)
-            .bind(budget.updated_at)
-            .fetch_one(&self.pool)
-            .await?;
+        let active_model = budgets::ActiveModel {
+            id: Set(budget.id),
+            user_id: Set(budget.user_id),
+            category: Set(budget.category.clone()),
+            amount: Set(budget.amount),
+            period: Set(period_str),
+            start_date: Set(budget.start_date),
+            end_date: Set(budget.end_date),
+            is_active: Set(budget.is_active),
+            created_at: Set(budget.created_at),
+            updated_at: Set(budget.updated_at),
+        };
 
-        Ok(row_to_budget(result))
+        let result = active_model.insert(&self.pool).await?;
+        Ok(model_to_budget(result))
     }
 
     async fn find_by_id(&self, id: &Uuid) -> Result<Option<Budget>> {
-        let query = format!("SELECT {BUDGET_COLUMNS} FROM budgets WHERE id=$1");
-
-        let result = sqlx::query(&query)
-            .bind(id)
-            .fetch_optional(&self.pool)
-            .await?;
-
-        Ok(result.map(row_to_budget))
+        let result = budgets::Entity::find_by_id(*id).one(&self.pool).await?;
+        Ok(result.map(model_to_budget))
     }
 
     async fn find_all(
@@ -127,64 +70,114 @@ impl BudgetRepository for PostgresBudgetRepository {
         limit: i64,
         offset: i64,
     ) -> Result<Vec<Budget>> {
-        let mut query_builder =
-            sqlx::QueryBuilder::new(format!("SELECT {BUDGET_COLUMNS} FROM budgets WHERE 1=1"));
+        let mut query = budgets::Entity::find();
 
-        apply_filters(&mut query_builder, filters);
-
-        if let Some(sort_field) = sort_by {
-            query_builder.push(format!(" ORDER BY {sort_field} {sort_order}"));
-        } else {
-            query_builder.push(" ORDER BY created_at DESC");
+        // Apply filters
+        if let Some(user_id) = filters.user_id {
+            query = query.filter(budgets::Column::UserId.eq(user_id));
+        }
+        if let Some(ref category) = filters.category {
+            query = query.filter(budgets::Column::Category.eq(category));
+        }
+        if let Some(ref period) = filters.period {
+            let period_str = serde_json::to_string(period).unwrap_or_default();
+            query = query.filter(budgets::Column::Period.eq(period_str));
+        }
+        if let Some(is_active) = filters.is_active {
+            query = query.filter(budgets::Column::IsActive.eq(is_active));
+        }
+        if let Some(min_amount) = filters.min_amount {
+            query = query.filter(budgets::Column::Amount.gte(min_amount));
+        }
+        if let Some(max_amount) = filters.max_amount {
+            query = query.filter(budgets::Column::Amount.lte(max_amount));
+        }
+        if let Some(start_after) = filters.start_after {
+            query = query.filter(budgets::Column::StartDate.gte(start_after));
+        }
+        if let Some(start_before) = filters.start_before {
+            query = query.filter(budgets::Column::StartDate.lte(start_before));
         }
 
-        query_builder.push(" LIMIT ");
-        query_builder.push_bind(limit);
-        query_builder.push(" OFFSET ");
-        query_builder.push_bind(offset);
+        // Apply sorting
+        let order = if sort_order.to_lowercase() == "asc" {
+            sea_orm::Order::Asc
+        } else {
+            sea_orm::Order::Desc
+        };
 
-        let results = query_builder.build().fetch_all(&self.pool).await?;
+        query = match sort_by {
+            Some("category") => query.order_by(budgets::Column::Category, order),
+            Some("amount") => query.order_by(budgets::Column::Amount, order),
+            Some("start_date") => query.order_by(budgets::Column::StartDate, order),
+            Some("created_at") | None => query.order_by(budgets::Column::CreatedAt, order),
+            Some(_) => query.order_by(budgets::Column::CreatedAt, order),
+        };
 
-        Ok(results.into_iter().map(row_to_budget).collect())
+        let results = query
+            .paginate(&self.pool, limit as u64)
+            .fetch_page((offset / limit.max(1)) as u64)
+            .await?;
+
+        Ok(results.into_iter().map(model_to_budget).collect())
     }
 
     async fn count_all(&self, filters: &BudgetFilters) -> Result<i64> {
-        let mut query_builder = sqlx::QueryBuilder::new("SELECT COUNT(*) FROM budgets WHERE 1=1");
+        let mut query = budgets::Entity::find();
 
-        apply_filters(&mut query_builder, filters);
+        // Apply filters
+        if let Some(user_id) = filters.user_id {
+            query = query.filter(budgets::Column::UserId.eq(user_id));
+        }
+        if let Some(ref category) = filters.category {
+            query = query.filter(budgets::Column::Category.eq(category));
+        }
+        if let Some(ref period) = filters.period {
+            let period_str = serde_json::to_string(period).unwrap_or_default();
+            query = query.filter(budgets::Column::Period.eq(period_str));
+        }
+        if let Some(is_active) = filters.is_active {
+            query = query.filter(budgets::Column::IsActive.eq(is_active));
+        }
+        if let Some(min_amount) = filters.min_amount {
+            query = query.filter(budgets::Column::Amount.gte(min_amount));
+        }
+        if let Some(max_amount) = filters.max_amount {
+            query = query.filter(budgets::Column::Amount.lte(max_amount));
+        }
+        if let Some(start_after) = filters.start_after {
+            query = query.filter(budgets::Column::StartDate.gte(start_after));
+        }
+        if let Some(start_before) = filters.start_before {
+            query = query.filter(budgets::Column::StartDate.lte(start_before));
+        }
 
-        let result: (i64,) = query_builder.build_query_as().fetch_one(&self.pool).await?;
-
-        Ok(result.0)
+        let count = query.count(&self.pool).await?;
+        Ok(count as i64)
     }
 
     async fn update(&self, budget: Budget) -> Result<Budget> {
         let period_str = serde_json::to_string(&budget.period)?;
-        let query = format!(
-            "UPDATE budgets SET category=$2, amount=$3, period=$4, start_date=$5, \
-             end_date=$6, is_active=$7, updated_at=$8 WHERE id=$1 RETURNING {BUDGET_COLUMNS}"
-        );
 
-        let result = sqlx::query(&query)
-            .bind(budget.id)
-            .bind(&budget.category)
-            .bind(budget.amount)
-            .bind(period_str)
-            .bind(budget.start_date)
-            .bind(budget.end_date)
-            .bind(budget.is_active)
-            .bind(budget.updated_at)
-            .fetch_one(&self.pool)
-            .await?;
+        let active_model = budgets::ActiveModel {
+            id: Set(budget.id),
+            user_id: Set(budget.user_id),
+            category: Set(budget.category.clone()),
+            amount: Set(budget.amount),
+            period: Set(period_str),
+            start_date: Set(budget.start_date),
+            end_date: Set(budget.end_date),
+            is_active: Set(budget.is_active),
+            created_at: Set(budget.created_at),
+            updated_at: Set(budget.updated_at),
+        };
 
-        Ok(row_to_budget(result))
+        let result = active_model.update(&self.pool).await?;
+        Ok(model_to_budget(result))
     }
 
     async fn delete(&self, id: &Uuid) -> Result<()> {
-        sqlx::query("DELETE FROM budgets WHERE id=$1")
-            .bind(id)
-            .execute(&self.pool)
-            .await?;
+        budgets::Entity::delete_by_id(*id).exec(&self.pool).await?;
         Ok(())
     }
 }

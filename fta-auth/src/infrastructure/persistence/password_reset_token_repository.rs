@@ -1,16 +1,29 @@
 use async_trait::async_trait;
-use sqlx::PgPool;
+use chrono::Utc;
+use fta_database::{entities::password_reset_tokens, sea_orm, DbPool};
+use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, QueryOrder, Set};
 use uuid::Uuid;
 
 use crate::domain::{PasswordResetToken, PasswordResetTokenRepository};
 
+fn model_to_password_reset_token(model: password_reset_tokens::Model) -> PasswordResetToken {
+    PasswordResetToken {
+        id: model.id,
+        user_id: model.user_id,
+        token: model.token,
+        expires_at: model.expires_at,
+        used: model.used,
+        created_at: model.created_at,
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct PostgresPasswordResetTokenRepository {
-    pool: PgPool,
+    pool: DbPool,
 }
 
 impl PostgresPasswordResetTokenRepository {
-    pub const fn new(pool: PgPool) -> Self {
+    pub fn new(pool: DbPool) -> Self {
         Self { pool }
     }
 }
@@ -18,117 +31,77 @@ impl PostgresPasswordResetTokenRepository {
 #[async_trait]
 impl PasswordResetTokenRepository for PostgresPasswordResetTokenRepository {
     async fn create(&self, token: PasswordResetToken) -> anyhow::Result<PasswordResetToken> {
-        let result = sqlx::query_as!(
-            PasswordResetToken,
-            r#"
-            INSERT INTO password_reset_tokens (id, user_id, token, expires_at, used, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id, user_id, token, expires_at, used, created_at
-            "#,
-            token.id,
-            token.user_id,
-            token.token,
-            token.expires_at,
-            token.used,
-            token.created_at,
-        )
-        .fetch_one(&self.pool)
-        .await?;
+        let active_model = password_reset_tokens::ActiveModel {
+            id: Set(token.id),
+            user_id: Set(token.user_id),
+            token: Set(token.token.clone()),
+            expires_at: Set(token.expires_at),
+            used: Set(token.used),
+            created_at: Set(token.created_at),
+        };
 
-        Ok(result)
+        let result = active_model.insert(&self.pool).await?;
+        Ok(model_to_password_reset_token(result))
     }
 
     async fn find_by_token(&self, token: &str) -> anyhow::Result<Option<PasswordResetToken>> {
-        let result = sqlx::query_as!(
-            PasswordResetToken,
-            r#"
-            SELECT id, user_id, token, expires_at, used, created_at
-            FROM password_reset_tokens
-            WHERE token = $1
-            "#,
-            token,
-        )
-        .fetch_optional(&self.pool)
-        .await?;
+        let result = password_reset_tokens::Entity::find()
+            .filter(password_reset_tokens::Column::Token.eq(token))
+            .one(&self.pool)
+            .await?;
 
-        Ok(result)
+        Ok(result.map(model_to_password_reset_token))
     }
 
     async fn find_by_user_id(&self, user_id: &Uuid) -> anyhow::Result<Vec<PasswordResetToken>> {
-        let tokens = sqlx::query_as!(
-            PasswordResetToken,
-            r#"
-            SELECT id, user_id, token, expires_at, used, created_at
-            FROM password_reset_tokens
-            WHERE user_id = $1
-            ORDER BY created_at DESC
-            "#,
-            user_id,
-        )
-        .fetch_all(&self.pool)
-        .await?;
+        let results = password_reset_tokens::Entity::find()
+            .filter(password_reset_tokens::Column::UserId.eq(*user_id))
+            .order_by_desc(password_reset_tokens::Column::CreatedAt)
+            .all(&self.pool)
+            .await?;
 
-        Ok(tokens)
+        Ok(results
+            .into_iter()
+            .map(model_to_password_reset_token)
+            .collect())
     }
 
     async fn update(&self, token: PasswordResetToken) -> anyhow::Result<PasswordResetToken> {
-        let result = sqlx::query_as!(
-            PasswordResetToken,
-            r#"
-            UPDATE password_reset_tokens
-            SET used = $1, expires_at = $2
-            WHERE id = $3
-            RETURNING id, user_id, token, expires_at, used, created_at
-            "#,
-            token.used,
-            token.expires_at,
-            token.id,
-        )
-        .fetch_one(&self.pool)
-        .await?;
+        let active_model = password_reset_tokens::ActiveModel {
+            id: Set(token.id),
+            user_id: Set(token.user_id),
+            token: Set(token.token.clone()),
+            expires_at: Set(token.expires_at),
+            used: Set(token.used),
+            created_at: Set(token.created_at),
+        };
 
-        Ok(result)
+        let result = active_model.update(&self.pool).await?;
+        Ok(model_to_password_reset_token(result))
     }
 
     async fn delete(&self, id: &Uuid) -> anyhow::Result<()> {
-        sqlx::query!(
-            r#"
-            DELETE FROM password_reset_tokens
-            WHERE id = $1
-            "#,
-            id,
-        )
-        .execute(&self.pool)
-        .await?;
-
+        password_reset_tokens::Entity::delete_by_id(*id)
+            .exec(&self.pool)
+            .await?;
         Ok(())
     }
 
     async fn delete_by_user_id(&self, user_id: &Uuid) -> anyhow::Result<()> {
-        sqlx::query!(
-            r#"
-            DELETE FROM password_reset_tokens
-            WHERE user_id = $1
-            "#,
-            user_id,
-        )
-        .execute(&self.pool)
-        .await?;
-
+        password_reset_tokens::Entity::delete_many()
+            .filter(password_reset_tokens::Column::UserId.eq(*user_id))
+            .exec(&self.pool)
+            .await?;
         Ok(())
     }
 
     async fn delete_expired(&self) -> anyhow::Result<u64> {
-        let result = sqlx::query!(
-            r#"
-            DELETE FROM password_reset_tokens
-            WHERE expires_at < NOW()
-            "#,
-        )
-        .execute(&self.pool)
-        .await?;
+        let result = password_reset_tokens::Entity::delete_many()
+            .filter(password_reset_tokens::Column::ExpiresAt.lt(Utc::now()))
+            .exec(&self.pool)
+            .await?;
 
-        Ok(result.rows_affected())
+        Ok(result.rows_affected)
     }
 }
 

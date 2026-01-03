@@ -1,59 +1,36 @@
-# Build artifacts
 target/
-*.o
-*.so
-*.dylib
-*.dll
+.git/
+.gitignore
+.env
+.env.*
+!.env.example
 
-# IDE files
+node_modules/
+npm-debug.log
+
+*.md
+!README.md
+LICENSE
+.editorconfig
+
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
-# OS files
 .DS_Store
 Thumbs.db
 
-# Git
-.git/
-.gitignore
-
-# Environment files
-.env
-.env.local
-.env.production
-!.env.example
-
-# Documentation (except README)
-*.md
-!README.md
-
-# Logs
 *.log
-logs/
+*.sqlite
+*.db
 
-# Docker files (to avoid recursion)
-Dockerfile*
-docker-compose*
+docker-compose*.yml
+Dockerfile
 .dockerignore
 
-# CI/CD
-.github/
-.gitlab-ci.yml
-
-# Temporary files
-*.tmp
-*.bak
-*.swp
-*~
-
-# Development configuration
 .cargo/
-.config/
-.claude/
+**/*.rs.bk
 
-# Test artifacts
-coverage/
-*.profraw
-*.profdata
+.claude/
