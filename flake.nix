@@ -32,6 +32,7 @@
 
           nativeBuildInputs = with pkgs; [
             pkg-config
+            curl
           ];
 
           buildInputs = with pkgs; [
