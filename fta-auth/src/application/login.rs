@@ -1,5 +1,5 @@
 use anyhow::Context;
-use fta_users::domain::UserRepository;
+use fta_users::domain::{User, UserRepository};
 use std::sync::Arc;
 
 use crate::{
@@ -12,6 +12,7 @@ pub struct LoginResult {
     pub access_token: String,
     pub refresh_token: String,
     pub requires_2fa: bool,
+    pub user: User,
 }
 
 pub struct Login {
@@ -90,6 +91,7 @@ impl Login {
             access_token,
             refresh_token: refresh_token_str,
             requires_2fa,
+            user,
         })
     }
 }

@@ -29,9 +29,15 @@ pub struct LoginRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
-pub struct LoginData {
+pub struct TokenData {
     pub access_token: String,
     pub refresh_token: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct LoginData {
+    pub token: TokenData,
+    pub user: fta_users::infrastructure::http::dto::UserResponse,
     pub requires_2fa: bool,
 }
 

@@ -24,6 +24,7 @@ use utoipa::OpenApi;
             fta_auth::infrastructure::http::dto::RegisterData,
             fta_auth::infrastructure::http::dto::VerifyEmailRequest,
             fta_auth::infrastructure::http::dto::LoginRequest,
+            fta_auth::infrastructure::http::dto::TokenData,
             fta_auth::infrastructure::http::dto::LoginData,
             fta_auth::infrastructure::http::dto::RefreshTokenRequest,
             fta_auth::infrastructure::http::dto::RefreshTokenData,

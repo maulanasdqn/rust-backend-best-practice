@@ -5,7 +5,9 @@ use std::sync::Arc;
 
 use crate::{
     application::{login, refresh_access_token},
-    infrastructure::http::dto::{LoginData, LoginRequest, RefreshTokenData, RefreshTokenRequest},
+    infrastructure::http::dto::{
+        LoginData, LoginRequest, RefreshTokenData, RefreshTokenRequest, TokenData,
+    },
 };
 
 use super::AuthAppState;
@@ -32,12 +34,15 @@ pub async fn login_handler(
     );
 
     match use_case.execute(req.email, req.password).await {
-        Ok(response) => Ok(Json(SingleResponse::with_message(
+        Ok(result) => Ok(Json(SingleResponse::with_message(
             "Login successful",
             LoginData {
-                access_token: response.access_token,
-                refresh_token: response.refresh_token,
-                requires_2fa: response.requires_2fa,
+                token: TokenData {
+                    access_token: result.access_token,
+                    refresh_token: result.refresh_token,
+                },
+                user: result.user.into(),
+                requires_2fa: result.requires_2fa,
             },
         ))),
         Err(e) => Err((
