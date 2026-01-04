@@ -187,7 +187,8 @@
             systemd.services.fta-server = {
               description = "Financial Tracker API Server";
               wantedBy = [ "multi-user.target" ];
-              after = [ "network.target" "postgresql.service" ];
+              after = [ "network.target" "postgresql.service" "redis-fta.service" ];
+              requires = [ "postgresql.service" ];
 
               environment = {
                 SERVER_HOST = cfg.host;
