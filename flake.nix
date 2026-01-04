@@ -26,7 +26,7 @@
         # Pre-fetch swagger UI zip to avoid network access during build
         swaggerUiZip = pkgs.fetchurl {
           url = "https://github.com/swagger-api/swagger-ui/archive/refs/tags/v5.17.14.zip";
-          sha256 = "sha256-e6U9XuuU/IYYmGtXCICbIRelVeFk5jV7mniwJWlqO2M=";
+          sha256 = "sha256-SBJE0IEgl7Efuu73n3HZQrFxYX+cn5UU5jrL4T5xzNw=";
         };
 
         # Common args for crane builds
