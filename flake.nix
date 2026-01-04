@@ -23,6 +23,12 @@
 
         craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain;
 
+        # Pre-fetch swagger UI zip to avoid network access during build
+        swaggerUiZip = pkgs.fetchurl {
+          url = "https://github.com/swagger-api/swagger-ui/archive/refs/tags/v5.17.14.zip";
+          sha256 = "sha256-e6U9XuuU/IYYmGtXCICbIRelVeFk5jV7mniwJWlqO2M=";
+        };
+
         # Common args for crane builds
         commonArgs = {
           pname = "fta";
@@ -32,7 +38,6 @@
 
           nativeBuildInputs = with pkgs; [
             pkg-config
-            curl
           ];
 
           buildInputs = with pkgs; [
@@ -41,6 +46,9 @@
             pkgs.darwin.apple_sdk.frameworks.Security
             pkgs.darwin.apple_sdk.frameworks.SystemConfiguration
           ];
+
+          # Point swagger UI build to pre-fetched zip file
+          SWAGGER_UI_DOWNLOAD_URL = "file://${swaggerUiZip}";
         };
 
         # Build dependencies only (for caching)
