@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+fta-types = { path = "../fta-types" }
 async-trait.workspace = true
 axum.workspace = true
 serde.workspace = true

@@ -13,4 +13,4 @@ pub use pagination::{
     PaginatorSortDirection, SearchParams,
 };
 pub use query_params::{ListQuery, PaginationQuery, SortOrder, SortQuery, MAX_PER_PAGE};
-pub use responses::{ErrorResponse, ListResponse, PaginationMeta, SingleResponse};
+pub use responses::{ErrorResponse, ListResponse, MessageOnlyResponse, PaginationMeta, SingleResponse};

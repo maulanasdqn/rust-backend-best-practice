@@ -4,7 +4,7 @@ use paginator_utils::PaginatorResponseMeta;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-const API_VERSION: &str = "v0.1.0";
+const API_VERSION: &str = concat!("v", env!("CARGO_PKG_VERSION"));
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ErrorResponse {
@@ -51,6 +51,23 @@ impl<T> SingleResponse<T> {
         Self {
             message: message.into(),
             data,
+            version: API_VERSION.to_string(),
+        }
+    }
+}
+
+/// Response type for endpoints that return only a message without data.
+/// Use this instead of SingleResponse<()> for better OpenAPI compatibility.
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct MessageOnlyResponse {
+    pub message: String,
+    pub version: String,
+}
+
+impl MessageOnlyResponse {
+    pub fn new(message: impl Into<String>) -> Self {
+        Self {
+            message: message.into(),
             version: API_VERSION.to_string(),
         }
     }

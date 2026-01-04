@@ -5,9 +5,10 @@ use axum::{
     response::Response,
     Json,
 };
+use fta_types::responses::ErrorResponse;
 use std::sync::Arc;
 
-use crate::infrastructure::{http::dto::MessageResponse, services::JwtService};
+use crate::infrastructure::services::JwtService;
 
 #[derive(Debug)]
 pub struct AuthUser {
@@ -32,20 +33,20 @@ pub async fn require_auth(
     State(state): State<Arc<AuthMiddlewareState>>,
     mut request: Request,
     next: Next,
-) -> Result<Response, (StatusCode, Json<MessageResponse>)> {
+) -> Result<Response, (StatusCode, Json<ErrorResponse>)> {
     let token = extract_token_from_header(&request)?;
 
     let claims = state.jwt_service.verify_token(token).map_err(|e| {
         (
             StatusCode::UNAUTHORIZED,
-            Json(MessageResponse::new(format!("Invalid token: {e}"))),
+            Json(ErrorResponse::new(format!("Invalid token: {e}"))),
         )
     })?;
 
     if !claims.is_access_token() {
         return Err((
             StatusCode::UNAUTHORIZED,
-            Json(MessageResponse::new("Invalid token type")),
+            Json(ErrorResponse::new("Invalid token type")),
         ));
     }
 
@@ -78,28 +79,28 @@ pub async fn optional_auth(
 
 fn extract_token_from_header(
     request: &Request,
-) -> Result<&str, (StatusCode, Json<MessageResponse>)> {
+) -> Result<&str, (StatusCode, Json<ErrorResponse>)> {
     let auth_header = request
         .headers()
         .get(header::AUTHORIZATION)
         .ok_or_else(|| {
             (
                 StatusCode::UNAUTHORIZED,
-                Json(MessageResponse::new("Missing Authorization header")),
+                Json(ErrorResponse::new("Missing Authorization header")),
             )
         })?;
 
     let auth_str = auth_header.to_str().map_err(|_| {
         (
             StatusCode::UNAUTHORIZED,
-            Json(MessageResponse::new("Invalid Authorization header")),
+            Json(ErrorResponse::new("Invalid Authorization header")),
         )
     })?;
 
     if !auth_str.starts_with("Bearer ") {
         return Err((
             StatusCode::UNAUTHORIZED,
-            Json(MessageResponse::new(
+            Json(ErrorResponse::new(
                 "Authorization header must start with 'Bearer '",
             )),
         ));
@@ -110,7 +111,7 @@ fn extract_token_from_header(
     if token.is_empty() {
         return Err((
             StatusCode::UNAUTHORIZED,
-            Json(MessageResponse::new("Token is empty")),
+            Json(ErrorResponse::new("Token is empty")),
         ));
     }
 
@@ -118,7 +119,7 @@ fn extract_token_from_header(
 }
 
 impl axum::extract::FromRequestParts<Arc<AuthMiddlewareState>> for AuthUser {
-    type Rejection = (StatusCode, Json<MessageResponse>);
+    type Rejection = (StatusCode, Json<ErrorResponse>);
 
     async fn from_request_parts(
         parts: &mut axum::http::request::Parts,
@@ -127,7 +128,7 @@ impl axum::extract::FromRequestParts<Arc<AuthMiddlewareState>> for AuthUser {
         parts.extensions.get::<Self>().cloned().ok_or_else(|| {
             (
                 StatusCode::UNAUTHORIZED,
-                Json(MessageResponse::new("Unauthorized")),
+                Json(ErrorResponse::new("Unauthorized")),
             )
         })
     }

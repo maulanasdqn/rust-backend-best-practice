@@ -21,22 +21,22 @@ use utoipa::OpenApi;
     components(
         schemas(
             fta_auth::infrastructure::http::dto::RegisterRequest,
-            fta_auth::infrastructure::http::dto::RegisterResponse,
+            fta_auth::infrastructure::http::dto::RegisterData,
             fta_auth::infrastructure::http::dto::VerifyEmailRequest,
             fta_auth::infrastructure::http::dto::LoginRequest,
-            fta_auth::infrastructure::http::dto::LoginResponse,
+            fta_auth::infrastructure::http::dto::LoginData,
             fta_auth::infrastructure::http::dto::RefreshTokenRequest,
-            fta_auth::infrastructure::http::dto::RefreshTokenResponse,
+            fta_auth::infrastructure::http::dto::RefreshTokenData,
             fta_auth::infrastructure::http::dto::LogoutRequest,
             fta_auth::infrastructure::http::dto::RequestPasswordResetRequest,
             fta_auth::infrastructure::http::dto::ResetPasswordRequest,
             fta_auth::infrastructure::http::dto::ChangePasswordRequest,
-            fta_auth::infrastructure::http::dto::Enable2FAResponse,
+            fta_auth::infrastructure::http::dto::Enable2FAData,
             fta_auth::infrastructure::http::dto::Verify2FARequest,
             fta_auth::infrastructure::http::dto::Disable2FARequest,
             fta_auth::infrastructure::http::dto::GoogleOAuthCallbackRequest,
-            fta_auth::infrastructure::http::dto::GoogleOAuthCallbackResponse,
-            fta_auth::infrastructure::http::dto::MessageResponse,
+            fta_auth::infrastructure::http::dto::GoogleOAuthData,
+            fta_auth::infrastructure::http::handlers::GoogleOAuthLoginData,
         )
     ),
     tags(
@@ -149,6 +149,7 @@ struct BudgetsApiDoc;
     fta_types::Money,
     fta_types::DateRange,
     fta_types::ErrorResponse,
+    fta_types::MessageOnlyResponse,
     fta_types::PaginationMeta,
 )))]
 struct CommonTypesApiDoc;

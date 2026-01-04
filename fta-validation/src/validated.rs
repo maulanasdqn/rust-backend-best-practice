@@ -4,6 +4,7 @@ use axum::{
     response::{IntoResponse, Response},
     Json,
 };
+use fta_types::responses::ErrorResponse;
 use serde::de::DeserializeOwned;
 use serde_json::Value;
 use zod_rs::{ObjectSchema, Schema};
@@ -34,33 +35,30 @@ where
                     ValidationErrorResponse::new(&format!("Deserialization error: {e}"))
                 })?;
                 Ok(Self(data))
-            },
+            }
             Err(errors) => {
                 let error_msg = format!("Validation failed: {errors}");
                 Err(ValidationErrorResponse::new(&error_msg))
-            },
+            }
         }
     }
 }
 
 #[derive(Debug)]
 pub struct ValidationErrorResponse {
-    message: String,
+    inner: ErrorResponse,
 }
 
 impl ValidationErrorResponse {
     fn new(message: &str) -> Self {
         Self {
-            message: message.to_string(),
+            inner: ErrorResponse::new(message),
         }
     }
 }
 
 impl IntoResponse for ValidationErrorResponse {
     fn into_response(self) -> Response {
-        let body = serde_json::json!({
-          "error": self.message
-        });
-        (StatusCode::BAD_REQUEST, Json(body)).into_response()
+        (StatusCode::BAD_REQUEST, Json(self.inner)).into_response()
     }
 }

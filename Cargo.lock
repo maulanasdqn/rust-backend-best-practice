@@ -1259,6 +1259,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "axum 0.8.8",
+ "fta-types",
  "serde",
  "serde_json",
  "zod-rs",

@@ -11,10 +11,9 @@ pub struct RegisterRequest {
     pub last_name: Option<String>,
 }
 
-#[derive(Debug, Serialize, ToSchema)]
-pub struct RegisterResponse {
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct RegisterData {
     pub user_id: Uuid,
-    pub message: String,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -29,8 +28,8 @@ pub struct LoginRequest {
     pub password: String,
 }
 
-#[derive(Debug, Serialize, ToSchema)]
-pub struct LoginResponse {
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct LoginData {
     pub access_token: String,
     pub refresh_token: String,
     pub requires_2fa: bool,
@@ -41,8 +40,8 @@ pub struct RefreshTokenRequest {
     pub refresh_token: String,
 }
 
-#[derive(Debug, Serialize, ToSchema)]
-pub struct RefreshTokenResponse {
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct RefreshTokenData {
     pub access_token: String,
 }
 
@@ -68,8 +67,8 @@ pub struct ChangePasswordRequest {
     pub new_password: String,
 }
 
-#[derive(Debug, Serialize, ToSchema)]
-pub struct Enable2FAResponse {
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct Enable2FAData {
     pub secret: String,
     pub qr_code_svg: String,
     pub provisioning_uri: String,
@@ -93,8 +92,8 @@ pub struct GoogleOAuthCallbackRequest {
     pub code: String,
 }
 
-#[derive(Debug, Serialize, ToSchema)]
-pub struct GoogleOAuthCallbackResponse {
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct GoogleOAuthData {
     pub access_token: String,
     pub refresh_token: String,
     pub is_new_user: bool,
