@@ -28,9 +28,11 @@ impl std::fmt::Display for SortOrder {
 #[derive(Debug, Clone, Serialize, Deserialize, IntoParams, ToSchema)]
 pub struct PaginationQuery {
     #[serde(default = "default_page")]
+    #[param(required = false)]
     pub page: u32,
 
     #[serde(default = "default_per_page")]
+    #[param(required = false)]
     pub per_page: u32,
 }
 
@@ -80,9 +82,11 @@ impl PaginationQuery {
 
 #[derive(Debug, Clone, Serialize, Deserialize, IntoParams, ToSchema)]
 pub struct SortQuery {
+    #[param(required = false)]
     pub sort_by: Option<String>,
 
     #[serde(default)]
+    #[param(required = false)]
     pub order: SortOrder,
 }
 
