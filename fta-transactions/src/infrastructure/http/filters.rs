@@ -8,20 +8,28 @@ use crate::domain::TransactionType;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, IntoParams, ToSchema)]
 pub struct TransactionFilters {
+    #[param(required = false)]
     pub account_id: Option<Uuid>,
 
+    #[param(required = false)]
     pub transaction_type: Option<TransactionType>,
 
+    #[param(required = false)]
     pub category: Option<String>,
 
+    #[param(required = false)]
     pub min_amount: Option<i64>,
 
+    #[param(required = false)]
     pub max_amount: Option<i64>,
 
+    #[param(required = false)]
     pub start_date: Option<DateTime<Utc>>,
 
+    #[param(required = false)]
     pub end_date: Option<DateTime<Utc>>,
 
+    #[param(required = false)]
     pub search: Option<String>,
 }
 

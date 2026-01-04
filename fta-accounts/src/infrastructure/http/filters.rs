@@ -6,18 +6,25 @@ use crate::domain::AccountType;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, IntoParams, ToSchema)]
 pub struct AccountFilters {
+    #[param(required = false)]
     pub user_id: Option<Uuid>,
 
+    #[param(required = false)]
     pub account_type: Option<AccountType>,
 
+    #[param(required = false)]
     pub currency: Option<String>,
 
+    #[param(required = false)]
     pub is_active: Option<bool>,
 
+    #[param(required = false)]
     pub min_balance: Option<i64>,
 
+    #[param(required = false)]
     pub max_balance: Option<i64>,
 
+    #[param(required = false)]
     pub name: Option<String>,
 }
 

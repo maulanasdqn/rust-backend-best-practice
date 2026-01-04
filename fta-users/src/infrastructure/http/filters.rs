@@ -5,20 +5,28 @@ use utoipa::{IntoParams, ToSchema};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, IntoParams, ToSchema)]
 pub struct UserFilters {
+    #[param(required = false)]
     pub email: Option<String>,
 
+    #[param(required = false)]
     pub first_name: Option<String>,
 
+    #[param(required = false)]
     pub last_name: Option<String>,
 
+    #[param(required = false)]
     pub verified_only: Option<bool>,
 
+    #[param(required = false)]
     pub oauth_provider: Option<String>,
 
+    #[param(required = false)]
     pub created_after: Option<DateTime<Utc>>,
 
+    #[param(required = false)]
     pub created_before: Option<DateTime<Utc>>,
 
+    #[param(required = false)]
     pub two_factor_enabled: Option<bool>,
 }
 

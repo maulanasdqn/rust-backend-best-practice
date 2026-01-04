@@ -7,20 +7,28 @@ use crate::domain::BudgetPeriod;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, IntoParams, ToSchema)]
 pub struct BudgetFilters {
+    #[param(required = false)]
     pub user_id: Option<Uuid>,
 
+    #[param(required = false)]
     pub category: Option<String>,
 
+    #[param(required = false)]
     pub period: Option<BudgetPeriod>,
 
+    #[param(required = false)]
     pub is_active: Option<bool>,
 
+    #[param(required = false)]
     pub min_amount: Option<i64>,
 
+    #[param(required = false)]
     pub max_amount: Option<i64>,
 
+    #[param(required = false)]
     pub start_after: Option<DateTime<Utc>>,
 
+    #[param(required = false)]
     pub start_before: Option<DateTime<Utc>>,
 }
 
