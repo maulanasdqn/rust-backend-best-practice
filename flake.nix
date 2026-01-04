@@ -47,8 +47,13 @@
             pkgs.darwin.apple_sdk.frameworks.SystemConfiguration
           ];
 
-          # Point swagger UI build to pre-fetched zip file
-          SWAGGER_UI_DOWNLOAD_URL = "file://${swaggerUiZip}";
+          # Copy swagger UI zip to build dir before build
+          preBuild = ''
+            mkdir -p $TMPDIR/swagger-ui
+            cp ${swaggerUiZip} $TMPDIR/swagger-ui/v5.17.14.zip
+            chmod 644 $TMPDIR/swagger-ui/v5.17.14.zip
+            export SWAGGER_UI_DOWNLOAD_URL="file://$TMPDIR/swagger-ui/v5.17.14.zip"
+          '';
         };
 
         # Build dependencies only (for caching)
