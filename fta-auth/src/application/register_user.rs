@@ -1,6 +1,10 @@
-use anyhow::Context;
+//! User registration use case.
+
+use fta_errors::AppError;
+use fta_types::impl_use_case_debug;
 use fta_users::domain::{User, UserRepository};
 use std::sync::Arc;
+use tracing::instrument;
 use uuid::Uuid;
 
 use crate::{
@@ -8,6 +12,7 @@ use crate::{
     infrastructure::services::{EmailService, OtpService, PasswordHashService},
 };
 
+/// Registers a new user and sends verification email.
 pub struct RegisterUser {
     user_repository: Arc<dyn UserRepository>,
     email_verification_repository: Arc<dyn EmailVerificationRepository>,
@@ -16,20 +21,7 @@ pub struct RegisterUser {
     email_service: EmailService,
 }
 
-impl std::fmt::Debug for RegisterUser {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("RegisterUser")
-            .field("user_repository", &"Arc<dyn UserRepository>")
-            .field(
-                "email_verification_repository",
-                &"Arc<dyn EmailVerificationRepository>",
-            )
-            .field("password_hash_service", &self.password_hash_service)
-            .field("otp_service", &self.otp_service)
-            .field("email_service", &self.email_service)
-            .finish()
-    }
-}
+impl_use_case_debug!(RegisterUser);
 
 impl RegisterUser {
     pub fn new(
@@ -48,21 +40,29 @@ impl RegisterUser {
         }
     }
 
+    /// Registers a new user account.
+    ///
+    /// # Errors
+    /// Returns `Conflict` if user with this email already exists.
+    #[instrument(skip(self, password), fields(email = %email))]
     pub async fn execute(
         &self,
         email: String,
         password: String,
         first_name: Option<String>,
         last_name: Option<String>,
-    ) -> anyhow::Result<Uuid> {
-        if let Some(_existing_user) = self.user_repository.find_by_email(&email).await? {
-            return Err(anyhow::anyhow!("User with this email already exists"));
+    ) -> Result<Uuid, AppError> {
+        tracing::debug!("Registering new user");
+
+        if self.user_repository.find_by_email(&email).await?.is_some() {
+            tracing::warn!("Registration attempted with existing email");
+            return Err(AppError::Conflict("User with this email already exists".to_string()));
         }
 
         let password_hash = self
             .password_hash_service
             .hash_password(&password)
-            .context("Failed to hash password")?;
+            .map_err(|e| AppError::InternalError(format!("Failed to hash password: {e}")))?;
 
         let user = User::new(
             email.clone(),
@@ -74,7 +74,7 @@ impl RegisterUser {
             .user_repository
             .create(user)
             .await
-            .context("Failed to create user")?;
+            .map_err(|e| AppError::InternalError(format!("Failed to create user: {e}")))?;
 
         let otp_code = self.otp_service.generate_code();
 
@@ -82,13 +82,15 @@ impl RegisterUser {
         self.email_verification_repository
             .create(verification)
             .await
-            .context("Failed to create email verification")?;
+            .map_err(|e| AppError::InternalError(format!("Failed to create email verification: {e}")))?;
 
         let user_name = created_user.full_name().unwrap_or_else(|| email.clone());
         self.email_service
             .send_verification_otp(&email, &user_name, &otp_code)
             .await
-            .context("Failed to send verification email")?;
+            .map_err(|e| AppError::InternalError(format!("Failed to send verification email: {e}")))?;
+
+        tracing::info!(user_id = %created_user.id, "User registered successfully");
 
         Ok(created_user.id)
     }

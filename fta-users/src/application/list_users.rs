@@ -1,25 +1,29 @@
-use fta_errors::AppError;
-use fta_types::PaginationQuery;
-use std::sync::Arc;
+//! List users use case.
 
 use crate::domain::{User, UserRepository};
 use crate::infrastructure::http::filters::UserFilters;
+use fta_errors::AppError;
+use fta_types::{impl_use_case_debug, PaginationQuery};
+use std::sync::Arc;
+use tracing::instrument;
 
+/// Lists users with filtering and pagination.
 pub struct ListUsers {
     repository: Arc<dyn UserRepository>,
 }
 
-impl std::fmt::Debug for ListUsers {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("ListUsers").finish()
-    }
-}
+impl_use_case_debug!(ListUsers);
 
 impl ListUsers {
     pub fn new(repository: Arc<dyn UserRepository>) -> Self {
         Self { repository }
     }
 
+    /// Retrieves a paginated list of users.
+    ///
+    /// # Returns
+    /// A tuple of (users, total_count) for pagination.
+    #[instrument(skip(self, filters, pagination))]
     pub async fn execute(
         &self,
         filters: &UserFilters,
@@ -27,11 +31,7 @@ impl ListUsers {
         sort_order: &str,
         pagination: &PaginationQuery,
     ) -> Result<(Vec<User>, i64), AppError> {
-        let total = self
-            .repository
-            .count_all(filters)
-            .await
-            .map_err(AppError::from)?;
+        let total = self.repository.count_all(filters).await?;
         let users = self
             .repository
             .find_all(
@@ -41,8 +41,8 @@ impl ListUsers {
                 i64::from(pagination.limit()),
                 i64::from(pagination.offset()),
             )
-            .await
-            .map_err(AppError::from)?;
+            .await?;
+        tracing::debug!(count = users.len(), total, "Listed users");
         Ok((users, total))
     }
 }

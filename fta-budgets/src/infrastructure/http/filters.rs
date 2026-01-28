@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use fta_types::{Filter, FilterBuilder, FilterValue};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
@@ -58,6 +59,67 @@ impl BudgetFilters {
         }
 
         Ok(())
+    }
+
+    /// Converts filters to paginator-compatible filter format.
+    pub fn to_paginator_filters(&self) -> Vec<Filter> {
+        let mut filters = Vec::new();
+
+        if let Some(user_id) = self.user_id {
+            filters.push(FilterBuilder::eq(
+                "user_id",
+                FilterValue::String(user_id.to_string()),
+            ));
+        }
+
+        if let Some(ref category) = self.category {
+            filters.push(FilterBuilder::ilike("category", format!("%{category}%")));
+        }
+
+        if let Some(ref period) = self.period {
+            filters.push(FilterBuilder::eq(
+                "period",
+                FilterValue::String(format!("{period:?}")),
+            ));
+        }
+
+        if let Some(is_active) = self.is_active {
+            if is_active {
+                filters.push(FilterBuilder::is_null("end_date"));
+            } else {
+                filters.push(FilterBuilder::is_not_null("end_date"));
+            }
+        }
+
+        if let Some(min_amount) = self.min_amount {
+            filters.push(FilterBuilder::gte(
+                "amount",
+                FilterValue::Int(min_amount),
+            ));
+        }
+
+        if let Some(max_amount) = self.max_amount {
+            filters.push(FilterBuilder::lte(
+                "amount",
+                FilterValue::Int(max_amount),
+            ));
+        }
+
+        if let Some(start_after) = self.start_after {
+            filters.push(FilterBuilder::gte(
+                "start_date",
+                FilterValue::String(start_after.to_rfc3339()),
+            ));
+        }
+
+        if let Some(start_before) = self.start_before {
+            filters.push(FilterBuilder::lte(
+                "start_date",
+                FilterValue::String(start_before.to_rfc3339()),
+            ));
+        }
+
+        filters
     }
 }
 

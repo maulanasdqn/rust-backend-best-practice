@@ -1,24 +1,29 @@
-use fta_errors::AppError;
-use std::sync::Arc;
-use uuid::Uuid;
+//! Update transaction use case.
 
 use crate::domain::{Transaction, TransactionRepository};
+use fta_errors::AppError;
+use fta_types::impl_use_case_debug;
+use std::sync::Arc;
+use tracing::instrument;
+use uuid::Uuid;
 
+/// Updates an existing transaction.
 pub struct UpdateTransaction {
     repository: Arc<dyn TransactionRepository>,
 }
 
-impl std::fmt::Debug for UpdateTransaction {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("UpdateTransaction").finish()
-    }
-}
+impl_use_case_debug!(UpdateTransaction);
 
 impl UpdateTransaction {
     pub fn new(repository: Arc<dyn TransactionRepository>) -> Self {
         Self { repository }
     }
 
+    /// Updates a transaction's category and description.
+    ///
+    /// # Errors
+    /// Returns `NotFound` if the transaction doesn't exist.
+    #[instrument(skip(self), fields(transaction_id = %id))]
     pub async fn execute(
         &self,
         id: Uuid,
@@ -28,15 +33,13 @@ impl UpdateTransaction {
         let mut transaction = self
             .repository
             .find_by_id(&id)
-            .await
-            .map_err(AppError::from)?
+            .await?
             .ok_or_else(|| AppError::NotFound("Transaction not found".to_string()))?;
 
         transaction.update_details(category, description);
 
-        self.repository
-            .update(transaction)
-            .await
-            .map_err(AppError::from)
+        let updated = self.repository.update(transaction).await?;
+        tracing::info!("Transaction updated successfully");
+        Ok(updated)
     }
 }

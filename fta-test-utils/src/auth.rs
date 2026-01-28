@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+#[derive(Debug)]
 pub struct TestAuth {
     pub user_id: Uuid,
     pub access_token: String,

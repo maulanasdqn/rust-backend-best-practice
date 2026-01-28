@@ -1,6 +1,8 @@
-use anyhow::Result;
+//! PostgreSQL implementation of the transaction repository.
+
 use async_trait::async_trait;
 use fta_database::{entities::transactions, sea_orm, DbPool};
+use fta_errors::AppError;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder, Set,
 };
@@ -26,6 +28,11 @@ fn model_to_transaction(model: transactions::Model) -> Transaction {
     }
 }
 
+/// Converts a database error to an application error.
+fn db_err(e: impl std::fmt::Display) -> AppError {
+    AppError::InternalError(format!("Database error: {e}"))
+}
+
 #[derive(Clone, Debug)]
 pub struct PostgresTransactionRepository {
     pool: DbPool,
@@ -39,8 +46,9 @@ impl PostgresTransactionRepository {
 
 #[async_trait]
 impl TransactionRepository for PostgresTransactionRepository {
-    async fn create(&self, transaction: Transaction) -> Result<Transaction> {
-        let transaction_type_str = serde_json::to_string(&transaction.transaction_type)?;
+    async fn create(&self, transaction: Transaction) -> Result<Transaction, AppError> {
+        let transaction_type_str =
+            serde_json::to_string(&transaction.transaction_type).map_err(db_err)?;
 
         let active_model = transactions::ActiveModel {
             id: Set(transaction.id),
@@ -54,14 +62,15 @@ impl TransactionRepository for PostgresTransactionRepository {
             updated_at: Set(transaction.updated_at),
         };
 
-        let result = active_model.insert(&self.pool).await?;
+        let result = active_model.insert(&self.pool).await.map_err(db_err)?;
         Ok(model_to_transaction(result))
     }
 
-    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Transaction>> {
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Transaction>, AppError> {
         let result = transactions::Entity::find_by_id(*id)
             .one(&self.pool)
-            .await?;
+            .await
+            .map_err(db_err)?;
         Ok(result.map(model_to_transaction))
     }
 
@@ -72,7 +81,7 @@ impl TransactionRepository for PostgresTransactionRepository {
         sort_order: &str,
         limit: i64,
         offset: i64,
-    ) -> Result<Vec<Transaction>> {
+    ) -> Result<Vec<Transaction>, AppError> {
         let mut query = transactions::Entity::find();
 
         // Apply filters
@@ -122,12 +131,13 @@ impl TransactionRepository for PostgresTransactionRepository {
         let results = query
             .paginate(&self.pool, limit as u64)
             .fetch_page((offset / limit.max(1)) as u64)
-            .await?;
+            .await
+            .map_err(db_err)?;
 
         Ok(results.into_iter().map(model_to_transaction).collect())
     }
 
-    async fn count_all(&self, filters: &TransactionFilters) -> Result<i64> {
+    async fn count_all(&self, filters: &TransactionFilters) -> Result<i64, AppError> {
         let mut query = transactions::Entity::find();
 
         // Apply filters
@@ -157,12 +167,13 @@ impl TransactionRepository for PostgresTransactionRepository {
             query = query.filter(transactions::Column::Description.contains(search));
         }
 
-        let count = query.count(&self.pool).await?;
+        let count = query.count(&self.pool).await.map_err(db_err)?;
         Ok(count as i64)
     }
 
-    async fn update(&self, transaction: Transaction) -> Result<Transaction> {
-        let transaction_type_str = serde_json::to_string(&transaction.transaction_type)?;
+    async fn update(&self, transaction: Transaction) -> Result<Transaction, AppError> {
+        let transaction_type_str =
+            serde_json::to_string(&transaction.transaction_type).map_err(db_err)?;
 
         let active_model = transactions::ActiveModel {
             id: Set(transaction.id),
@@ -176,14 +187,15 @@ impl TransactionRepository for PostgresTransactionRepository {
             updated_at: Set(transaction.updated_at),
         };
 
-        let result = active_model.update(&self.pool).await?;
+        let result = active_model.update(&self.pool).await.map_err(db_err)?;
         Ok(model_to_transaction(result))
     }
 
-    async fn delete(&self, id: &Uuid) -> Result<()> {
+    async fn delete(&self, id: &Uuid) -> Result<(), AppError> {
         transactions::Entity::delete_by_id(*id)
             .exec(&self.pool)
-            .await?;
+            .await
+            .map_err(db_err)?;
         Ok(())
     }
 }

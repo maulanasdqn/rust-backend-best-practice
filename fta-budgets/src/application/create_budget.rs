@@ -1,25 +1,28 @@
+//! Create budget use case.
+
 use chrono::{DateTime, Utc};
 use fta_errors::AppError;
+use fta_types::impl_use_case_debug;
 use std::sync::Arc;
+use tracing::instrument;
 use uuid::Uuid;
 
 use crate::domain::{Budget, BudgetPeriod, BudgetRepository};
 
+/// Creates a new budget.
 pub struct CreateBudget {
     repository: Arc<dyn BudgetRepository>,
 }
 
-impl std::fmt::Debug for CreateBudget {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("CreateBudget").finish()
-    }
-}
+impl_use_case_debug!(CreateBudget);
 
 impl CreateBudget {
     pub fn new(repository: Arc<dyn BudgetRepository>) -> Self {
         Self { repository }
     }
 
+    /// Creates a new budget for a user.
+    #[instrument(skip(self), fields(user_id = %user_id, category = %category))]
     pub async fn execute(
         &self,
         user_id: Uuid,
@@ -28,7 +31,10 @@ impl CreateBudget {
         period: BudgetPeriod,
         start_date: DateTime<Utc>,
     ) -> Result<Budget, AppError> {
+        tracing::debug!("Creating new budget");
         let budget = Budget::new(user_id, category, amount, period, start_date);
-        self.repository.create(budget).await.map_err(AppError::from)
+        let result = self.repository.create(budget).await?;
+        tracing::info!(budget_id = %result.id, "Budget created successfully");
+        Ok(result)
     }
 }

@@ -1,25 +1,28 @@
+//! Create transaction use case.
+
 use chrono::{DateTime, Utc};
 use fta_errors::AppError;
+use fta_types::impl_use_case_debug;
 use std::sync::Arc;
+use tracing::instrument;
 use uuid::Uuid;
 
 use crate::domain::{Transaction, TransactionRepository, TransactionType};
 
+/// Creates a new financial transaction.
 pub struct CreateTransaction {
     repository: Arc<dyn TransactionRepository>,
 }
 
-impl std::fmt::Debug for CreateTransaction {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("CreateTransaction").finish()
-    }
-}
+impl_use_case_debug!(CreateTransaction);
 
 impl CreateTransaction {
     pub fn new(repository: Arc<dyn TransactionRepository>) -> Self {
         Self { repository }
     }
 
+    /// Creates a new transaction for an account.
+    #[instrument(skip(self), fields(account_id = %account_id, amount = amount))]
     pub async fn execute(
         &self,
         account_id: Uuid,
@@ -29,6 +32,7 @@ impl CreateTransaction {
         description: Option<String>,
         transaction_date: DateTime<Utc>,
     ) -> Result<Transaction, AppError> {
+        tracing::debug!("Creating new transaction");
         let transaction = Transaction::new(
             account_id,
             transaction_type,
@@ -38,9 +42,8 @@ impl CreateTransaction {
             transaction_date,
         );
 
-        self.repository
-            .create(transaction)
-            .await
-            .map_err(AppError::from)
+        let result = self.repository.create(transaction).await?;
+        tracing::info!(transaction_id = %result.id, "Transaction created successfully");
+        Ok(result)
     }
 }

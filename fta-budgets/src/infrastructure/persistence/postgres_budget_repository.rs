@@ -1,6 +1,8 @@
-use anyhow::Result;
+//! PostgreSQL implementation of the budget repository.
+
 use async_trait::async_trait;
 use fta_database::{entities::budgets, sea_orm, DbPool};
+use fta_errors::AppError;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder, Set,
 };
@@ -24,6 +26,11 @@ fn model_to_budget(model: budgets::Model) -> Budget {
     }
 }
 
+/// Converts a database error to an application error.
+fn db_err(e: impl std::fmt::Display) -> AppError {
+    AppError::InternalError(format!("Database error: {e}"))
+}
+
 #[derive(Clone, Debug)]
 pub struct PostgresBudgetRepository {
     pool: DbPool,
@@ -37,8 +44,8 @@ impl PostgresBudgetRepository {
 
 #[async_trait]
 impl BudgetRepository for PostgresBudgetRepository {
-    async fn create(&self, budget: Budget) -> Result<Budget> {
-        let period_str = serde_json::to_string(&budget.period)?;
+    async fn create(&self, budget: Budget) -> Result<Budget, AppError> {
+        let period_str = serde_json::to_string(&budget.period).map_err(db_err)?;
 
         let active_model = budgets::ActiveModel {
             id: Set(budget.id),
@@ -53,12 +60,15 @@ impl BudgetRepository for PostgresBudgetRepository {
             updated_at: Set(budget.updated_at),
         };
 
-        let result = active_model.insert(&self.pool).await?;
+        let result = active_model.insert(&self.pool).await.map_err(db_err)?;
         Ok(model_to_budget(result))
     }
 
-    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Budget>> {
-        let result = budgets::Entity::find_by_id(*id).one(&self.pool).await?;
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Budget>, AppError> {
+        let result = budgets::Entity::find_by_id(*id)
+            .one(&self.pool)
+            .await
+            .map_err(db_err)?;
         Ok(result.map(model_to_budget))
     }
 
@@ -69,7 +79,7 @@ impl BudgetRepository for PostgresBudgetRepository {
         sort_order: &str,
         limit: i64,
         offset: i64,
-    ) -> Result<Vec<Budget>> {
+    ) -> Result<Vec<Budget>, AppError> {
         let mut query = budgets::Entity::find();
 
         // Apply filters
@@ -117,12 +127,13 @@ impl BudgetRepository for PostgresBudgetRepository {
         let results = query
             .paginate(&self.pool, limit as u64)
             .fetch_page((offset / limit.max(1)) as u64)
-            .await?;
+            .await
+            .map_err(db_err)?;
 
         Ok(results.into_iter().map(model_to_budget).collect())
     }
 
-    async fn count_all(&self, filters: &BudgetFilters) -> Result<i64> {
+    async fn count_all(&self, filters: &BudgetFilters) -> Result<i64, AppError> {
         let mut query = budgets::Entity::find();
 
         // Apply filters
@@ -152,12 +163,12 @@ impl BudgetRepository for PostgresBudgetRepository {
             query = query.filter(budgets::Column::StartDate.lte(start_before));
         }
 
-        let count = query.count(&self.pool).await?;
+        let count = query.count(&self.pool).await.map_err(db_err)?;
         Ok(count as i64)
     }
 
-    async fn update(&self, budget: Budget) -> Result<Budget> {
-        let period_str = serde_json::to_string(&budget.period)?;
+    async fn update(&self, budget: Budget) -> Result<Budget, AppError> {
+        let period_str = serde_json::to_string(&budget.period).map_err(db_err)?;
 
         let active_model = budgets::ActiveModel {
             id: Set(budget.id),
@@ -172,12 +183,15 @@ impl BudgetRepository for PostgresBudgetRepository {
             updated_at: Set(budget.updated_at),
         };
 
-        let result = active_model.update(&self.pool).await?;
+        let result = active_model.update(&self.pool).await.map_err(db_err)?;
         Ok(model_to_budget(result))
     }
 
-    async fn delete(&self, id: &Uuid) -> Result<()> {
-        budgets::Entity::delete_by_id(*id).exec(&self.pool).await?;
+    async fn delete(&self, id: &Uuid) -> Result<(), AppError> {
+        budgets::Entity::delete_by_id(*id)
+            .exec(&self.pool)
+            .await
+            .map_err(db_err)?;
         Ok(())
     }
 }

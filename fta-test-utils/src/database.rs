@@ -9,6 +9,14 @@ pub struct TestDatabase {
     admin_pool: DbPool,
 }
 
+impl std::fmt::Debug for TestDatabase {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TestDatabase")
+            .field("db_name", &self.db_name)
+            .finish_non_exhaustive()
+    }
+}
+
 impl TestDatabase {
     pub async fn new() -> Result<Self, sea_orm::DbErr> {
         let base_url = std::env::var("DATABASE_URL")

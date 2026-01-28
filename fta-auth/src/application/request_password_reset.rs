@@ -1,13 +1,18 @@
-use anyhow::Context;
+//! Request password reset use case.
+
+use fta_errors::AppError;
+use fta_types::impl_use_case_debug;
 use fta_users::domain::UserRepository;
 use rand::Rng;
 use std::sync::Arc;
+use tracing::instrument;
 
 use crate::{
     domain::{PasswordResetToken, PasswordResetTokenRepository},
     infrastructure::services::EmailService,
 };
 
+/// Initiates a password reset by sending a reset email.
 pub struct RequestPasswordReset {
     user_repository: Arc<dyn UserRepository>,
     password_reset_token_repository: Arc<dyn PasswordResetTokenRepository>,
@@ -15,19 +20,7 @@ pub struct RequestPasswordReset {
     base_url: String,
 }
 
-impl std::fmt::Debug for RequestPasswordReset {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("RequestPasswordReset")
-            .field("user_repository", &"Arc<dyn UserRepository>")
-            .field(
-                "password_reset_token_repository",
-                &"Arc<dyn PasswordResetTokenRepository>",
-            )
-            .field("email_service", &self.email_service)
-            .field("base_url", &self.base_url)
-            .finish()
-    }
-}
+impl_use_case_debug!(RequestPasswordReset);
 
 impl RequestPasswordReset {
     pub fn new(
@@ -44,8 +37,15 @@ impl RequestPasswordReset {
         }
     }
 
-    pub async fn execute(&self, email: String) -> anyhow::Result<()> {
+    /// Sends a password reset email if the user exists.
+    ///
+    /// Note: Always returns Ok(()) to prevent email enumeration attacks.
+    #[instrument(skip(self), fields(email = %email))]
+    pub async fn execute(&self, email: String) -> Result<(), AppError> {
+        tracing::debug!("Processing password reset request");
+
         let Some(user) = self.user_repository.find_by_email(&email).await? else {
+            tracing::debug!("No user found for email, silently succeeding");
             return Ok(());
         };
 
@@ -60,13 +60,15 @@ impl RequestPasswordReset {
         self.password_reset_token_repository
             .create(reset_token)
             .await
-            .context("Failed to create password reset token")?;
+            .map_err(|e| AppError::InternalError(format!("Failed to create password reset token: {e}")))?;
 
         let user_name = user.full_name().unwrap_or_else(|| email.clone());
         self.email_service
             .send_password_reset(&email, &user_name, &token, &self.base_url)
             .await
-            .context("Failed to send password reset email")?;
+            .map_err(|e| AppError::InternalError(format!("Failed to send password reset email: {e}")))?;
+
+        tracing::info!(user_id = %user.id, "Password reset email sent");
 
         Ok(())
     }

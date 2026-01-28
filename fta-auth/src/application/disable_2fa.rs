@@ -1,25 +1,22 @@
-use anyhow::Context;
+//! Disable 2FA use case.
+
+use fta_errors::AppError;
+use fta_types::impl_use_case_debug;
 use fta_users::domain::UserRepository;
 use std::sync::Arc;
+use tracing::instrument;
 use uuid::Uuid;
 
 use crate::infrastructure::services::{PasswordHashService, TwoFactorService};
 
+/// Disables two-factor authentication for a user.
 pub struct Disable2FA {
     user_repository: Arc<dyn UserRepository>,
     two_factor_service: TwoFactorService,
     password_hash_service: PasswordHashService,
 }
 
-impl std::fmt::Debug for Disable2FA {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Disable2FA")
-            .field("user_repository", &"Arc<dyn UserRepository>")
-            .field("two_factor_service", &self.two_factor_service)
-            .field("password_hash_service", &self.password_hash_service)
-            .finish()
-    }
-}
+impl_use_case_debug!(Disable2FA);
 
 impl Disable2FA {
     pub fn new(
@@ -34,41 +31,54 @@ impl Disable2FA {
         }
     }
 
+    /// Disables 2FA after verifying password and 2FA code.
+    ///
+    /// # Errors
+    /// Returns `NotFound` if user doesn't exist.
+    /// Returns `Unauthorized` if password or 2FA code is invalid.
+    #[instrument(skip(self, password, code), fields(user_id = %user_id))]
     pub async fn execute(
         &self,
         user_id: Uuid,
         password: String,
         code: String,
-    ) -> anyhow::Result<()> {
+    ) -> Result<(), AppError> {
+        tracing::debug!("Disabling 2FA");
+
         let user = self
             .user_repository
             .find_by_id(&user_id)
             .await?
-            .ok_or_else(|| anyhow::anyhow!("User not found"))?;
+            .ok_or_else(|| AppError::NotFound("User not found".to_string()))?;
 
         let is_password_valid = self
             .password_hash_service
-            .verify_password(&password, &user.password_hash)?;
+            .verify_password(&password, &user.password_hash)
+            .map_err(|e| AppError::InternalError(format!("Password verification failed: {e}")))?;
 
         if !is_password_valid {
-            return Err(anyhow::anyhow!("Invalid password"));
+            tracing::warn!("Invalid password");
+            return Err(AppError::Unauthorized("Invalid password".to_string()));
         }
 
         let secret = "placeholder";
 
         let is_code_valid = self
             .two_factor_service
-            .verify_code(&user.email, secret, &code)?;
+            .verify_code(&user.email, secret, &code)
+            .map_err(|e| AppError::InternalError(format!("2FA verification failed: {e}")))?;
 
         if !is_code_valid {
-            return Err(anyhow::anyhow!("Invalid 2FA code"));
+            tracing::warn!("Invalid 2FA code");
+            return Err(AppError::Unauthorized("Invalid 2FA code".to_string()));
         }
 
         self.user_repository
             .update(user)
             .await
-            .context("Failed to disable 2FA")?;
+            .map_err(|e| AppError::InternalError(format!("Failed to disable 2FA: {e}")))?;
 
+        tracing::info!("2FA disabled successfully");
         Ok(())
     }
 }

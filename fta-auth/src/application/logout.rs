@@ -1,22 +1,18 @@
-use anyhow::Context;
+//! User logout use case.
+
+use fta_errors::AppError;
+use fta_types::impl_use_case_debug;
 use std::sync::Arc;
+use tracing::instrument;
 
 use crate::domain::RefreshTokenRepository;
 
+/// Logs out a user by revoking their refresh token.
 pub struct Logout {
     refresh_token_repository: Arc<dyn RefreshTokenRepository>,
 }
 
-impl std::fmt::Debug for Logout {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Logout")
-            .field(
-                "refresh_token_repository",
-                &"Arc<dyn RefreshTokenRepository>",
-            )
-            .finish()
-    }
-}
+impl_use_case_debug!(Logout);
 
 impl Logout {
     pub fn new(refresh_token_repository: Arc<dyn RefreshTokenRepository>) -> Self {
@@ -25,12 +21,19 @@ impl Logout {
         }
     }
 
-    pub async fn execute(&self, refresh_token: String) -> anyhow::Result<()> {
+    /// Revokes the specified refresh token.
+    ///
+    /// # Errors
+    /// Returns `InternalError` if token deletion fails.
+    #[instrument(skip(self, refresh_token))]
+    pub async fn execute(&self, refresh_token: String) -> Result<(), AppError> {
+        tracing::debug!("Logging out user");
+
         self.refresh_token_repository
             .delete_by_token(&refresh_token)
-            .await
-            .context("Failed to delete refresh token")?;
+            .await?;
 
+        tracing::info!("User logged out successfully");
         Ok(())
     }
 }

@@ -1,5 +1,8 @@
+//! Google OAuth login use case.
+
 use crate::infrastructure::services::GoogleOAuthService;
 
+/// Generates a Google OAuth authorization URL.
 #[derive(Debug)]
 pub struct GoogleOAuthLogin {
     google_oauth_service: GoogleOAuthService,
@@ -12,7 +15,9 @@ impl GoogleOAuthLogin {
         }
     }
 
+    /// Returns the Google OAuth authorization URL.
     pub fn execute(&self) -> String {
+        tracing::debug!("Generating Google OAuth URL");
         self.google_oauth_service.get_authorization_url()
     }
 }

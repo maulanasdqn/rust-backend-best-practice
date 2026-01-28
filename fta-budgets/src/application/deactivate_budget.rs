@@ -1,35 +1,42 @@
+//! Deactivate budget use case.
+
 use chrono::{DateTime, Utc};
 use fta_errors::AppError;
+use fta_types::impl_use_case_debug;
 use std::sync::Arc;
+use tracing::instrument;
 use uuid::Uuid;
 
 use crate::domain::{Budget, BudgetRepository};
 
+/// Deactivates a budget by setting an end date.
 pub struct DeactivateBudget {
     repository: Arc<dyn BudgetRepository>,
 }
 
-impl std::fmt::Debug for DeactivateBudget {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("DeactivateBudget").finish()
-    }
-}
+impl_use_case_debug!(DeactivateBudget);
 
 impl DeactivateBudget {
     pub fn new(repository: Arc<dyn BudgetRepository>) -> Self {
         Self { repository }
     }
 
+    /// Deactivates a budget by setting its end date.
+    ///
+    /// # Errors
+    /// Returns `NotFound` if the budget doesn't exist.
+    #[instrument(skip(self), fields(budget_id = %id))]
     pub async fn execute(&self, id: Uuid, end_date: DateTime<Utc>) -> Result<Budget, AppError> {
         let mut budget = self
             .repository
             .find_by_id(&id)
-            .await
-            .map_err(AppError::from)?
+            .await?
             .ok_or_else(|| AppError::NotFound("Budget not found".to_string()))?;
 
         budget.deactivate(end_date);
 
-        self.repository.update(budget).await.map_err(AppError::from)
+        let updated = self.repository.update(budget).await?;
+        tracing::info!("Budget deactivated successfully");
+        Ok(updated)
     }
 }

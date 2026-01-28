@@ -1,3 +1,24 @@
+//! # Application Error Types
+//!
+//! This crate provides a centralized error handling system for the Financial Tracker API.
+//!
+//! ## Error Types
+//!
+//! [`AppError`] is the main error enum used throughout the application:
+//!
+//! - `NotFound` - Resource not found (HTTP 404)
+//! - `BadRequest` - Invalid request data (HTTP 400)
+//! - `ValidationError` - Validation failure (HTTP 400)
+//! - `Unauthorized` - Authentication required/failed (HTTP 401)
+//! - `Forbidden` - Access denied (HTTP 403)
+//! - `Conflict` - Resource conflict (HTTP 409)
+//! - `InternalError` - Server error (HTTP 500)
+//!
+//! ## Axum Integration
+//!
+//! `AppError` implements `IntoResponse` for seamless integration with Axum handlers.
+//! Errors are automatically converted to JSON responses with appropriate HTTP status codes.
+
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},

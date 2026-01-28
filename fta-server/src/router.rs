@@ -1,8 +1,14 @@
+//! Application router configuration with middleware layers.
+
 use std::sync::Arc;
 
 use axum::{response::Redirect, routing::get, Extension, Router};
+use tower_governor::{
+    governor::GovernorConfigBuilder, key_extractor::SmartIpKeyExtractor, GovernorLayer,
+};
 use tower_http::{
     cors::CorsLayer,
+    limit::RequestBodyLimitLayer,
     trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer},
     LatencyUnit,
 };
@@ -18,6 +24,15 @@ use crate::api_doc::ApiDoc;
 use crate::health;
 use crate::use_cases::UseCases;
 
+/// Maximum request body size in bytes (1 MB).
+const MAX_BODY_SIZE: usize = 1024 * 1024;
+
+/// Rate limit: requests per second per IP.
+const RATE_LIMIT_PER_SECOND: u64 = 50;
+
+/// Rate limit burst size (max requests that can be made instantly).
+const RATE_LIMIT_BURST: u32 = 100;
+
 async fn redirect_to_docs() -> Redirect {
     Redirect::permanent("/docs")
 }
@@ -27,6 +42,16 @@ pub fn build_router(
     use_cases: UseCases,
     db_pool: fta_database::DbPool,
 ) -> Router {
+    // Configure rate limiting per IP address
+    let governor_conf = Arc::new(
+        GovernorConfigBuilder::default()
+            .per_second(RATE_LIMIT_PER_SECOND)
+            .burst_size(RATE_LIMIT_BURST)
+            .key_extractor(SmartIpKeyExtractor)
+            .finish()
+            .expect("Failed to build rate limiter config"),
+    );
+
     let api_v1 = Router::new()
         .merge(auth_routes(auth_state))
         .merge(user_routes())
@@ -63,6 +88,11 @@ pub fn build_router(
         .with_state(Arc::new(db_pool))
         .merge(SwaggerUi::new("/docs").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .nest("/api/v1", api_v1)
+        // Rate limiting layer (must be before other layers to protect against DoS)
+        .layer(GovernorLayer::new(governor_conf))
+        // Request body size limit (1 MB)
+        .layer(RequestBodyLimitLayer::new(MAX_BODY_SIZE))
+        // HTTP request/response tracing
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(
@@ -77,5 +107,6 @@ pub fn build_router(
                         .level(tracing::Level::INFO),
                 ),
         )
+        // CORS configuration
         .layer(CorsLayer::permissive())
 }

@@ -1,73 +1,96 @@
+version: "3.8"
+
 services:
+  # PostgreSQL Database
   postgres:
-    image: postgres:16-alpine
-    container_name: fta-postgres
-    restart: unless-stopped
-    env_file:
-      - .env
+    image: postgres:17-alpine
+    container_name: axum-postgres
     environment:
-      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: axum_clean_arch
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - fta-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
-    security_opt:
-      - no-new-privileges:true
+    networks:
+      - axum-network
 
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: fta-api
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-    env_file:
-      - .env
+  # Redis (optional - for caching/sessions)
+  redis:
+    image: redis:7-alpine
+    container_name: axum-redis
     ports:
-      - "127.0.0.1:${PORT:-3000}:${PORT:-3000}"
-    networks:
-      - fta-network
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
     healthcheck:
-      test:
-        ["CMD-SHELL", "curl -f http://localhost:${PORT:-3000}/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    security_opt:
-      - no-new-privileges:true
-
-  migration:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: fta-migration
-    restart: "no"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    env_file:
-      - .env
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
-      - fta-network
-    command: ["fta-migration"]
-    profiles:
-      - migrate
+      - axum-network
 
-networks:
-  fta-network:
-    driver: bridge
-    name: fta-network
+  # Application (uncomment when you have a Dockerfile)
+  # app:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: axum-app
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     DATABASE_URL: postgresql://postgres:postgres@postgres:5432/axum_clean_arch
+  #     REDIS_URL: redis://redis:6379
+  #   env_file:
+  #     - .env
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   networks:
+  #     - axum-network
+
+  # pgAdmin (optional - database management UI)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: axum-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - axum-network
+    profiles:
+      - tools
+
+  # MailHog (local email testing)
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: axum-mailhog
+    ports:
+      - "1025:1025"  # SMTP server
+      - "8025:8025"  # Web UI
+    networks:
+      - axum-network
+    profiles:
+      - tools
 
 volumes:
   postgres_data:
-    driver: local
-    name: fta-postgres-data
+  redis_data:
+
+networks:
+  axum-network:
+    driver: bridge

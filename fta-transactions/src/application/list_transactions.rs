@@ -1,25 +1,29 @@
-use fta_errors::AppError;
-use fta_types::PaginationQuery;
-use std::sync::Arc;
+//! List transactions use case.
 
 use crate::domain::{Transaction, TransactionRepository};
 use crate::infrastructure::http::filters::TransactionFilters;
+use fta_errors::AppError;
+use fta_types::{impl_use_case_debug, PaginationQuery};
+use std::sync::Arc;
+use tracing::instrument;
 
+/// Lists transactions with filtering and pagination.
 pub struct ListTransactions {
     repository: Arc<dyn TransactionRepository>,
 }
 
-impl std::fmt::Debug for ListTransactions {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("ListTransactions").finish()
-    }
-}
+impl_use_case_debug!(ListTransactions);
 
 impl ListTransactions {
     pub fn new(repository: Arc<dyn TransactionRepository>) -> Self {
         Self { repository }
     }
 
+    /// Retrieves a paginated list of transactions.
+    ///
+    /// # Returns
+    /// A tuple of (transactions, total_count) for pagination.
+    #[instrument(skip(self, filters, pagination))]
     pub async fn execute(
         &self,
         filters: &TransactionFilters,
@@ -27,11 +31,7 @@ impl ListTransactions {
         sort_order: &str,
         pagination: &PaginationQuery,
     ) -> Result<(Vec<Transaction>, i64), AppError> {
-        let total = self
-            .repository
-            .count_all(filters)
-            .await
-            .map_err(AppError::from)?;
+        let total = self.repository.count_all(filters).await?;
         let transactions = self
             .repository
             .find_all(
@@ -41,8 +41,8 @@ impl ListTransactions {
                 i64::from(pagination.limit()),
                 i64::from(pagination.offset()),
             )
-            .await
-            .map_err(AppError::from)?;
+            .await?;
+        tracing::debug!(count = transactions.len(), total, "Listed transactions");
         Ok((transactions, total))
     }
 }

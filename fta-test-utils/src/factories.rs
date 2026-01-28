@@ -2,6 +2,7 @@ use chrono::{DateTime, Utc};
 use fake::Fake;
 use uuid::Uuid;
 
+#[derive(Debug)]
 pub struct UserFactory;
 
 impl UserFactory {
@@ -31,6 +32,7 @@ impl UserFactory {
     }
 }
 
+#[derive(Debug)]
 pub struct AccountFactory;
 
 impl AccountFactory {
@@ -60,6 +62,7 @@ impl AccountFactory {
     }
 }
 
+#[derive(Debug)]
 pub struct TransactionFactory;
 
 impl TransactionFactory {
@@ -99,6 +102,7 @@ impl TransactionFactory {
     }
 }
 
+#[derive(Debug)]
 pub struct BudgetFactory;
 
 impl BudgetFactory {
@@ -123,6 +127,7 @@ impl BudgetFactory {
     }
 }
 
+#[derive(Debug)]
 pub struct TestData;
 
 impl TestData {

@@ -1,3 +1,4 @@
+use fta_types::{Filter, FilterBuilder, FilterValue};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
@@ -47,6 +48,60 @@ impl AccountFilters {
         }
 
         Ok(())
+    }
+
+    /// Converts filters to paginator-compatible filter format.
+    pub fn to_paginator_filters(&self) -> Vec<Filter> {
+        let mut filters = Vec::new();
+
+        if let Some(user_id) = self.user_id {
+            filters.push(FilterBuilder::eq(
+                "user_id",
+                FilterValue::String(user_id.to_string()),
+            ));
+        }
+
+        if let Some(ref account_type) = self.account_type {
+            filters.push(FilterBuilder::eq(
+                "account_type",
+                FilterValue::String(format!("{account_type:?}")),
+            ));
+        }
+
+        if let Some(ref currency) = self.currency {
+            filters.push(FilterBuilder::eq(
+                "currency",
+                FilterValue::String(currency.clone()),
+            ));
+        }
+
+        if let Some(is_active) = self.is_active {
+            if is_active {
+                filters.push(FilterBuilder::is_null("end_date"));
+            } else {
+                filters.push(FilterBuilder::is_not_null("end_date"));
+            }
+        }
+
+        if let Some(min_balance) = self.min_balance {
+            filters.push(FilterBuilder::gte(
+                "balance",
+                FilterValue::Int(min_balance),
+            ));
+        }
+
+        if let Some(max_balance) = self.max_balance {
+            filters.push(FilterBuilder::lte(
+                "balance",
+                FilterValue::Int(max_balance),
+            ));
+        }
+
+        if let Some(ref name) = self.name {
+            filters.push(FilterBuilder::ilike("name", format!("%{name}%")));
+        }
+
+        filters
     }
 }
 

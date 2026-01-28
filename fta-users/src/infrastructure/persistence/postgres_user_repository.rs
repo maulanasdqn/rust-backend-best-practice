@@ -1,6 +1,8 @@
-use anyhow::Result;
+//! PostgreSQL implementation of the user repository.
+
 use async_trait::async_trait;
 use fta_database::{entities::users, sea_orm, DbPool};
+use fta_errors::AppError;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder, Set,
 };
@@ -44,6 +46,11 @@ fn user_to_active_model(user: &User) -> users::ActiveModel {
     }
 }
 
+/// Converts a database error to an application error.
+fn db_err(e: impl std::fmt::Display) -> AppError {
+    AppError::InternalError(format!("Database error: {e}"))
+}
+
 #[derive(Clone, Debug)]
 pub struct PostgresUserRepository {
     pool: DbPool,
@@ -57,26 +64,30 @@ impl PostgresUserRepository {
 
 #[async_trait]
 impl UserRepository for PostgresUserRepository {
-    async fn create(&self, user: User) -> Result<User> {
+    async fn create(&self, user: User) -> Result<User, AppError> {
         let active_model = user_to_active_model(&user);
-        let result = active_model.insert(&self.pool).await?;
+        let result = active_model.insert(&self.pool).await.map_err(db_err)?;
         Ok(model_to_user(result))
     }
 
-    async fn find_by_id(&self, id: &Uuid) -> Result<Option<User>> {
-        let result = users::Entity::find_by_id(*id).one(&self.pool).await?;
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<User>, AppError> {
+        let result = users::Entity::find_by_id(*id)
+            .one(&self.pool)
+            .await
+            .map_err(db_err)?;
         Ok(result.map(model_to_user))
     }
 
-    async fn find_by_email(&self, email: &str) -> Result<Option<User>> {
+    async fn find_by_email(&self, email: &str) -> Result<Option<User>, AppError> {
         let result = users::Entity::find()
             .filter(users::Column::Email.eq(email))
             .one(&self.pool)
-            .await?;
+            .await
+            .map_err(db_err)?;
         Ok(result.map(model_to_user))
     }
 
-    async fn update(&self, user: User) -> Result<User> {
+    async fn update(&self, user: User) -> Result<User, AppError> {
         let active_model = users::ActiveModel {
             id: Set(user.id),
             email: Set(user.email.clone()),
@@ -93,7 +104,7 @@ impl UserRepository for PostgresUserRepository {
             updated_at: Set(user.updated_at),
         };
 
-        let result = active_model.update(&self.pool).await?;
+        let result = active_model.update(&self.pool).await.map_err(db_err)?;
         Ok(model_to_user(result))
     }
 
@@ -104,7 +115,7 @@ impl UserRepository for PostgresUserRepository {
         sort_order: &str,
         limit: i64,
         offset: i64,
-    ) -> Result<Vec<User>> {
+    ) -> Result<Vec<User>, AppError> {
         let mut query = users::Entity::find();
 
         // Apply filters
@@ -152,7 +163,8 @@ impl UserRepository for PostgresUserRepository {
         let results = query
             .paginate(&self.pool, limit as u64)
             .fetch_page((offset / limit.max(1)) as u64)
-            .await?;
+            .await
+            .map_err(db_err)?;
 
         Ok(results.into_iter().map(model_to_user).collect())
     }
@@ -160,7 +172,7 @@ impl UserRepository for PostgresUserRepository {
     async fn count_all(
         &self,
         filters: &crate::infrastructure::http::filters::UserFilters,
-    ) -> Result<i64> {
+    ) -> Result<i64, AppError> {
         let mut query = users::Entity::find();
 
         // Apply filters
@@ -189,12 +201,15 @@ impl UserRepository for PostgresUserRepository {
             query = query.filter(users::Column::TwoFactorEnabled.eq(two_factor));
         }
 
-        let count = query.count(&self.pool).await?;
+        let count = query.count(&self.pool).await.map_err(db_err)?;
         Ok(count as i64)
     }
 
-    async fn delete(&self, id: &Uuid) -> Result<()> {
-        users::Entity::delete_by_id(*id).exec(&self.pool).await?;
+    async fn delete(&self, id: &Uuid) -> Result<(), AppError> {
+        users::Entity::delete_by_id(*id)
+            .exec(&self.pool)
+            .await
+            .map_err(db_err)?;
         Ok(())
     }
 }

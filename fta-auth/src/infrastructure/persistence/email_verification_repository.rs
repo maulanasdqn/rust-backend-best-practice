@@ -1,6 +1,9 @@
+//! PostgreSQL implementation of the email verification repository.
+
 use async_trait::async_trait;
 use chrono::Utc;
 use fta_database::{entities::email_verifications, sea_orm, DbPool};
+use fta_errors::AppError;
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, QueryOrder, Set};
 use uuid::Uuid;
 
@@ -16,6 +19,11 @@ fn model_to_email_verification(model: email_verifications::Model) -> EmailVerifi
     }
 }
 
+/// Converts a database error to an application error.
+fn db_err(e: impl std::fmt::Display) -> AppError {
+    AppError::InternalError(format!("Database error: {e}"))
+}
+
 #[derive(Clone, Debug)]
 pub struct PostgresEmailVerificationRepository {
     pool: DbPool,
@@ -29,7 +37,7 @@ impl PostgresEmailVerificationRepository {
 
 #[async_trait]
 impl EmailVerificationRepository for PostgresEmailVerificationRepository {
-    async fn create(&self, verification: EmailVerification) -> anyhow::Result<EmailVerification> {
+    async fn create(&self, verification: EmailVerification) -> Result<EmailVerification, AppError> {
         let active_model = email_verifications::ActiveModel {
             id: Set(verification.id),
             user_id: Set(verification.user_id),
@@ -38,40 +46,44 @@ impl EmailVerificationRepository for PostgresEmailVerificationRepository {
             created_at: Set(verification.created_at),
         };
 
-        let result = active_model.insert(&self.pool).await?;
+        let result = active_model.insert(&self.pool).await.map_err(db_err)?;
         Ok(model_to_email_verification(result))
     }
 
-    async fn find_by_user_id(&self, user_id: &Uuid) -> anyhow::Result<Option<EmailVerification>> {
+    async fn find_by_user_id(&self, user_id: &Uuid) -> Result<Option<EmailVerification>, AppError> {
         let result = email_verifications::Entity::find()
             .filter(email_verifications::Column::UserId.eq(*user_id))
             .order_by_desc(email_verifications::Column::CreatedAt)
             .one(&self.pool)
-            .await?;
+            .await
+            .map_err(db_err)?;
 
         Ok(result.map(model_to_email_verification))
     }
 
-    async fn delete(&self, id: &Uuid) -> anyhow::Result<()> {
+    async fn delete(&self, id: &Uuid) -> Result<(), AppError> {
         email_verifications::Entity::delete_by_id(*id)
             .exec(&self.pool)
-            .await?;
+            .await
+            .map_err(db_err)?;
         Ok(())
     }
 
-    async fn delete_by_user_id(&self, user_id: &Uuid) -> anyhow::Result<()> {
+    async fn delete_by_user_id(&self, user_id: &Uuid) -> Result<(), AppError> {
         email_verifications::Entity::delete_many()
             .filter(email_verifications::Column::UserId.eq(*user_id))
             .exec(&self.pool)
-            .await?;
+            .await
+            .map_err(db_err)?;
         Ok(())
     }
 
-    async fn delete_expired(&self) -> anyhow::Result<u64> {
+    async fn delete_expired(&self) -> Result<u64, AppError> {
         let result = email_verifications::Entity::delete_many()
             .filter(email_verifications::Column::ExpiresAt.lt(Utc::now()))
             .exec(&self.pool)
-            .await?;
+            .await
+            .map_err(db_err)?;
 
         Ok(result.rows_affected)
     }

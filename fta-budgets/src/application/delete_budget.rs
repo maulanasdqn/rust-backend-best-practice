@@ -1,31 +1,37 @@
-use fta_errors::AppError;
-use std::sync::Arc;
-use uuid::Uuid;
+//! Delete budget use case.
 
 use crate::domain::BudgetRepository;
+use fta_errors::AppError;
+use fta_types::impl_use_case_debug;
+use std::sync::Arc;
+use tracing::instrument;
+use uuid::Uuid;
 
+/// Deletes a budget.
 pub struct DeleteBudget {
     repository: Arc<dyn BudgetRepository>,
 }
 
-impl std::fmt::Debug for DeleteBudget {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("DeleteBudget").finish()
-    }
-}
+impl_use_case_debug!(DeleteBudget);
 
 impl DeleteBudget {
     pub fn new(repository: Arc<dyn BudgetRepository>) -> Self {
         Self { repository }
     }
 
+    /// Permanently deletes a budget.
+    ///
+    /// # Errors
+    /// Returns `NotFound` if the budget doesn't exist.
+    #[instrument(skip(self), fields(budget_id = %id))]
     pub async fn execute(&self, id: Uuid) -> Result<(), AppError> {
         self.repository
             .find_by_id(&id)
-            .await
-            .map_err(AppError::from)?
+            .await?
             .ok_or_else(|| AppError::NotFound("Budget not found".to_string()))?;
 
-        self.repository.delete(&id).await.map_err(AppError::from)
+        self.repository.delete(&id).await?;
+        tracing::info!("Budget deleted successfully");
+        Ok(())
     }
 }

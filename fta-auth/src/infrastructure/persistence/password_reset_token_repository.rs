@@ -1,6 +1,9 @@
+//! PostgreSQL implementation of the password reset token repository.
+
 use async_trait::async_trait;
 use chrono::Utc;
 use fta_database::{entities::password_reset_tokens, sea_orm, DbPool};
+use fta_errors::AppError;
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, QueryOrder, Set};
 use uuid::Uuid;
 
@@ -17,6 +20,11 @@ fn model_to_password_reset_token(model: password_reset_tokens::Model) -> Passwor
     }
 }
 
+/// Converts a database error to an application error.
+fn db_err(e: impl std::fmt::Display) -> AppError {
+    AppError::InternalError(format!("Database error: {e}"))
+}
+
 #[derive(Clone, Debug)]
 pub struct PostgresPasswordResetTokenRepository {
     pool: DbPool,
@@ -30,7 +38,7 @@ impl PostgresPasswordResetTokenRepository {
 
 #[async_trait]
 impl PasswordResetTokenRepository for PostgresPasswordResetTokenRepository {
-    async fn create(&self, token: PasswordResetToken) -> anyhow::Result<PasswordResetToken> {
+    async fn create(&self, token: PasswordResetToken) -> Result<PasswordResetToken, AppError> {
         let active_model = password_reset_tokens::ActiveModel {
             id: Set(token.id),
             user_id: Set(token.user_id),
@@ -40,25 +48,27 @@ impl PasswordResetTokenRepository for PostgresPasswordResetTokenRepository {
             created_at: Set(token.created_at),
         };
 
-        let result = active_model.insert(&self.pool).await?;
+        let result = active_model.insert(&self.pool).await.map_err(db_err)?;
         Ok(model_to_password_reset_token(result))
     }
 
-    async fn find_by_token(&self, token: &str) -> anyhow::Result<Option<PasswordResetToken>> {
+    async fn find_by_token(&self, token: &str) -> Result<Option<PasswordResetToken>, AppError> {
         let result = password_reset_tokens::Entity::find()
             .filter(password_reset_tokens::Column::Token.eq(token))
             .one(&self.pool)
-            .await?;
+            .await
+            .map_err(db_err)?;
 
         Ok(result.map(model_to_password_reset_token))
     }
 
-    async fn find_by_user_id(&self, user_id: &Uuid) -> anyhow::Result<Vec<PasswordResetToken>> {
+    async fn find_by_user_id(&self, user_id: &Uuid) -> Result<Vec<PasswordResetToken>, AppError> {
         let results = password_reset_tokens::Entity::find()
             .filter(password_reset_tokens::Column::UserId.eq(*user_id))
             .order_by_desc(password_reset_tokens::Column::CreatedAt)
             .all(&self.pool)
-            .await?;
+            .await
+            .map_err(db_err)?;
 
         Ok(results
             .into_iter()
@@ -66,7 +76,7 @@ impl PasswordResetTokenRepository for PostgresPasswordResetTokenRepository {
             .collect())
     }
 
-    async fn update(&self, token: PasswordResetToken) -> anyhow::Result<PasswordResetToken> {
+    async fn update(&self, token: PasswordResetToken) -> Result<PasswordResetToken, AppError> {
         let active_model = password_reset_tokens::ActiveModel {
             id: Set(token.id),
             user_id: Set(token.user_id),
@@ -76,30 +86,33 @@ impl PasswordResetTokenRepository for PostgresPasswordResetTokenRepository {
             created_at: Set(token.created_at),
         };
 
-        let result = active_model.update(&self.pool).await?;
+        let result = active_model.update(&self.pool).await.map_err(db_err)?;
         Ok(model_to_password_reset_token(result))
     }
 
-    async fn delete(&self, id: &Uuid) -> anyhow::Result<()> {
+    async fn delete(&self, id: &Uuid) -> Result<(), AppError> {
         password_reset_tokens::Entity::delete_by_id(*id)
             .exec(&self.pool)
-            .await?;
+            .await
+            .map_err(db_err)?;
         Ok(())
     }
 
-    async fn delete_by_user_id(&self, user_id: &Uuid) -> anyhow::Result<()> {
+    async fn delete_by_user_id(&self, user_id: &Uuid) -> Result<(), AppError> {
         password_reset_tokens::Entity::delete_many()
             .filter(password_reset_tokens::Column::UserId.eq(*user_id))
             .exec(&self.pool)
-            .await?;
+            .await
+            .map_err(db_err)?;
         Ok(())
     }
 
-    async fn delete_expired(&self) -> anyhow::Result<u64> {
+    async fn delete_expired(&self) -> Result<u64, AppError> {
         let result = password_reset_tokens::Entity::delete_many()
             .filter(password_reset_tokens::Column::ExpiresAt.lt(Utc::now()))
             .exec(&self.pool)
-            .await?;
+            .await
+            .map_err(db_err)?;
 
         Ok(result.rows_affected)
     }

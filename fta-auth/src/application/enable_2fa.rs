@@ -1,6 +1,10 @@
-use anyhow::Context;
+//! Enable 2FA use case.
+
+use fta_errors::AppError;
+use fta_types::impl_use_case_debug;
 use fta_users::domain::UserRepository;
 use std::sync::Arc;
+use tracing::instrument;
 use uuid::Uuid;
 
 use crate::infrastructure::services::TwoFactorService;
@@ -12,19 +16,13 @@ pub struct Enable2FAResult {
     pub provisioning_uri: String,
 }
 
+/// Enables two-factor authentication for a user.
 pub struct Enable2FA {
     user_repository: Arc<dyn UserRepository>,
     two_factor_service: TwoFactorService,
 }
 
-impl std::fmt::Debug for Enable2FA {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Enable2FA")
-            .field("user_repository", &"Arc<dyn UserRepository>")
-            .field("two_factor_service", &self.two_factor_service)
-            .finish()
-    }
-}
+impl_use_case_debug!(Enable2FA);
 
 impl Enable2FA {
     pub fn new(
@@ -37,29 +35,38 @@ impl Enable2FA {
         }
     }
 
-    pub async fn execute(&self, user_id: Uuid) -> anyhow::Result<Enable2FAResult> {
+    /// Generates 2FA setup data (secret, QR code, provisioning URI).
+    ///
+    /// # Errors
+    /// Returns `NotFound` if user doesn't exist.
+    #[instrument(skip(self), fields(user_id = %user_id))]
+    pub async fn execute(&self, user_id: Uuid) -> Result<Enable2FAResult, AppError> {
+        tracing::debug!("Enabling 2FA");
+
         let user = self
             .user_repository
             .find_by_id(&user_id)
             .await?
-            .ok_or_else(|| anyhow::anyhow!("User not found"))?;
+            .ok_or_else(|| AppError::NotFound("User not found".to_string()))?;
 
         let secret = self.two_factor_service.generate_secret();
 
         let qr_code_svg = self
             .two_factor_service
             .generate_qr_code(&user.email, &secret)
-            .context("Failed to generate QR code")?;
+            .map_err(|e| AppError::InternalError(format!("Failed to generate QR code: {e}")))?;
 
         let provisioning_uri = self
             .two_factor_service
             .get_provisioning_uri(&user.email, &secret)
-            .context("Failed to generate provisioning URI")?;
+            .map_err(|e| AppError::InternalError(format!("Failed to generate provisioning URI: {e}")))?;
 
         self.user_repository
             .update(user)
             .await
-            .context("Failed to update user")?;
+            .map_err(|e| AppError::InternalError(format!("Failed to update user: {e}")))?;
+
+        tracing::info!("2FA setup data generated");
 
         Ok(Enable2FAResult {
             secret,

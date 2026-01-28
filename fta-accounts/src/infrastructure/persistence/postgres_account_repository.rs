@@ -1,6 +1,8 @@
-use anyhow::Result;
+//! PostgreSQL implementation of the account repository.
+
 use async_trait::async_trait;
 use fta_database::{entities::accounts, sea_orm, DbPool};
+use fta_errors::AppError;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder, Set,
 };
@@ -26,6 +28,11 @@ fn model_to_account(model: accounts::Model) -> Account {
     }
 }
 
+/// Converts a database error to an application error.
+fn db_err(e: impl std::fmt::Display) -> AppError {
+    AppError::InternalError(format!("Database error: {e}"))
+}
+
 #[derive(Clone, Debug)]
 pub struct PostgresAccountRepository {
     pool: DbPool,
@@ -39,8 +46,9 @@ impl PostgresAccountRepository {
 
 #[async_trait]
 impl AccountRepository for PostgresAccountRepository {
-    async fn create(&self, account: Account) -> Result<Account> {
-        let account_type_str = serde_json::to_string(&account.account_type)?;
+    async fn create(&self, account: Account) -> Result<Account, AppError> {
+        let account_type_str =
+            serde_json::to_string(&account.account_type).map_err(db_err)?;
 
         let active_model = accounts::ActiveModel {
             id: Set(account.id),
@@ -54,12 +62,15 @@ impl AccountRepository for PostgresAccountRepository {
             updated_at: Set(account.updated_at),
         };
 
-        let result = active_model.insert(&self.pool).await?;
+        let result = active_model.insert(&self.pool).await.map_err(db_err)?;
         Ok(model_to_account(result))
     }
 
-    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Account>> {
-        let result = accounts::Entity::find_by_id(*id).one(&self.pool).await?;
+    async fn find_by_id(&self, id: &Uuid) -> Result<Option<Account>, AppError> {
+        let result = accounts::Entity::find_by_id(*id)
+            .one(&self.pool)
+            .await
+            .map_err(db_err)?;
         Ok(result.map(model_to_account))
     }
 
@@ -70,7 +81,7 @@ impl AccountRepository for PostgresAccountRepository {
         sort_order: &str,
         limit: i64,
         offset: i64,
-    ) -> Result<Vec<Account>> {
+    ) -> Result<Vec<Account>, AppError> {
         let mut query = accounts::Entity::find();
 
         // Apply filters
@@ -115,12 +126,13 @@ impl AccountRepository for PostgresAccountRepository {
         let results = query
             .paginate(&self.pool, limit as u64)
             .fetch_page((offset / limit.max(1)) as u64)
-            .await?;
+            .await
+            .map_err(db_err)?;
 
         Ok(results.into_iter().map(model_to_account).collect())
     }
 
-    async fn count_all(&self, filters: &AccountFilters) -> Result<i64> {
+    async fn count_all(&self, filters: &AccountFilters) -> Result<i64, AppError> {
         let mut query = accounts::Entity::find();
 
         // Apply filters
@@ -147,12 +159,13 @@ impl AccountRepository for PostgresAccountRepository {
             query = query.filter(accounts::Column::Name.contains(name));
         }
 
-        let count = query.count(&self.pool).await?;
+        let count = query.count(&self.pool).await.map_err(db_err)?;
         Ok(count as i64)
     }
 
-    async fn update(&self, account: Account) -> Result<Account> {
-        let account_type_str = serde_json::to_string(&account.account_type)?;
+    async fn update(&self, account: Account) -> Result<Account, AppError> {
+        let account_type_str =
+            serde_json::to_string(&account.account_type).map_err(db_err)?;
 
         let active_model = accounts::ActiveModel {
             id: Set(account.id),
@@ -166,12 +179,15 @@ impl AccountRepository for PostgresAccountRepository {
             updated_at: Set(account.updated_at),
         };
 
-        let result = active_model.update(&self.pool).await?;
+        let result = active_model.update(&self.pool).await.map_err(db_err)?;
         Ok(model_to_account(result))
     }
 
-    async fn delete(&self, id: &Uuid) -> Result<()> {
-        accounts::Entity::delete_by_id(*id).exec(&self.pool).await?;
+    async fn delete(&self, id: &Uuid) -> Result<(), AppError> {
+        accounts::Entity::delete_by_id(*id)
+            .exec(&self.pool)
+            .await
+            .map_err(db_err)?;
         Ok(())
     }
 }

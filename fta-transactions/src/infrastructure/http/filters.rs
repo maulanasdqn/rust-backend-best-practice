@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use fta_types::DateRange;
+use fta_types::{DateRange, Filter, FilterBuilder, FilterValue};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
@@ -66,6 +66,63 @@ impl TransactionFilters {
             (Some(start), Some(end)) => DateRange::new(start, end).ok(),
             _ => None,
         }
+    }
+
+    /// Converts filters to paginator-compatible filter format.
+    pub fn to_paginator_filters(&self) -> Vec<Filter> {
+        let mut filters = Vec::new();
+
+        if let Some(account_id) = self.account_id {
+            filters.push(FilterBuilder::eq(
+                "account_id",
+                FilterValue::String(account_id.to_string()),
+            ));
+        }
+
+        if let Some(ref transaction_type) = self.transaction_type {
+            filters.push(FilterBuilder::eq(
+                "transaction_type",
+                FilterValue::String(format!("{transaction_type:?}")),
+            ));
+        }
+
+        if let Some(ref category) = self.category {
+            filters.push(FilterBuilder::ilike("category", format!("%{category}%")));
+        }
+
+        if let Some(min_amount) = self.min_amount {
+            filters.push(FilterBuilder::gte(
+                "amount",
+                FilterValue::Int(min_amount),
+            ));
+        }
+
+        if let Some(max_amount) = self.max_amount {
+            filters.push(FilterBuilder::lte(
+                "amount",
+                FilterValue::Int(max_amount),
+            ));
+        }
+
+        if let Some(start_date) = self.start_date {
+            filters.push(FilterBuilder::gte(
+                "transaction_date",
+                FilterValue::String(start_date.to_rfc3339()),
+            ));
+        }
+
+        if let Some(end_date) = self.end_date {
+            filters.push(FilterBuilder::lte(
+                "transaction_date",
+                FilterValue::String(end_date.to_rfc3339()),
+            ));
+        }
+
+        if let Some(ref search) = self.search {
+            filters.push(FilterBuilder::ilike("description", format!("%{search}%")));
+        }
+
+        filters
     }
 }
 

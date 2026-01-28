@@ -6,6 +6,7 @@ use std::net::SocketAddr;
 use tokio::net::TcpListener;
 use tower::ServiceExt;
 
+#[derive(Debug)]
 pub struct TestClient {
     client: reqwest::Client,
     base_url: String,
@@ -141,6 +142,12 @@ impl TestClient {
 
 pub struct AxumTestClient {
     app: Router,
+}
+
+impl std::fmt::Debug for AxumTestClient {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AxumTestClient").finish_non_exhaustive()
+    }
 }
 
 impl AxumTestClient {

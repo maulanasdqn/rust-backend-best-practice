@@ -1,29 +1,33 @@
-use fta_errors::AppError;
-use std::sync::Arc;
-use uuid::Uuid;
+//! Get budget use case.
 
 use crate::domain::{Budget, BudgetRepository};
+use fta_errors::AppError;
+use fta_types::impl_use_case_debug;
+use std::sync::Arc;
+use tracing::instrument;
+use uuid::Uuid;
 
+/// Retrieves a single budget by ID.
 pub struct GetBudget {
     repository: Arc<dyn BudgetRepository>,
 }
 
-impl std::fmt::Debug for GetBudget {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("GetBudget").finish()
-    }
-}
+impl_use_case_debug!(GetBudget);
 
 impl GetBudget {
     pub fn new(repository: Arc<dyn BudgetRepository>) -> Self {
         Self { repository }
     }
 
+    /// Retrieves a budget by its unique identifier.
+    ///
+    /// # Errors
+    /// Returns `NotFound` if the budget doesn't exist.
+    #[instrument(skip(self), fields(budget_id = %id))]
     pub async fn execute(&self, id: Uuid) -> Result<Budget, AppError> {
         self.repository
             .find_by_id(&id)
-            .await
-            .map_err(AppError::from)?
+            .await?
             .ok_or_else(|| AppError::NotFound("Budget not found".to_string()))
     }
 }

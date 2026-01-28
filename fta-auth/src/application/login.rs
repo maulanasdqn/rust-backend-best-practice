@@ -1,6 +1,10 @@
-use anyhow::Context;
+//! User login use case.
+
+use fta_errors::AppError;
+use fta_types::impl_use_case_debug;
 use fta_users::domain::{User, UserRepository};
 use std::sync::Arc;
+use tracing::instrument;
 
 use crate::{
     domain::{RefreshToken, RefreshTokenRepository},
@@ -15,6 +19,7 @@ pub struct LoginResult {
     pub user: User,
 }
 
+/// Authenticates a user and issues JWT tokens.
 pub struct Login {
     user_repository: Arc<dyn UserRepository>,
     refresh_token_repository: Arc<dyn RefreshTokenRepository>,
@@ -22,19 +27,7 @@ pub struct Login {
     jwt_service: JwtService,
 }
 
-impl std::fmt::Debug for Login {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Login")
-            .field("user_repository", &"Arc<dyn UserRepository>")
-            .field(
-                "refresh_token_repository",
-                &"Arc<dyn RefreshTokenRepository>",
-            )
-            .field("password_hash_service", &self.password_hash_service)
-            .field("jwt_service", &"JwtService")
-            .finish()
-    }
-}
+impl_use_case_debug!(Login);
 
 impl Login {
     pub fn new(
@@ -51,19 +44,28 @@ impl Login {
         }
     }
 
-    pub async fn execute(&self, email: String, password: String) -> anyhow::Result<LoginResult> {
+    /// Authenticates a user with email and password.
+    ///
+    /// # Errors
+    /// Returns `Unauthorized` if credentials are invalid.
+    #[instrument(skip(self, password), fields(email = %email))]
+    pub async fn execute(&self, email: String, password: String) -> Result<LoginResult, AppError> {
+        tracing::debug!("Attempting login");
+
         let user = self
             .user_repository
             .find_by_email(&email)
             .await?
-            .ok_or_else(|| anyhow::anyhow!("Invalid email or password"))?;
+            .ok_or_else(|| AppError::Unauthorized("Invalid email or password".to_string()))?;
 
         let is_valid = self
             .password_hash_service
-            .verify_password(&password, &user.password_hash)?;
+            .verify_password(&password, &user.password_hash)
+            .map_err(|e| AppError::InternalError(format!("Password verification failed: {e}")))?;
 
         if !is_valid {
-            return Err(anyhow::anyhow!("Invalid email or password"));
+            tracing::warn!("Invalid password attempt");
+            return Err(AppError::Unauthorized("Invalid email or password".to_string()));
         }
 
         let requires_2fa = false;
@@ -71,21 +73,25 @@ impl Login {
         self.user_repository
             .update(user.clone())
             .await
-            .context("Failed to update user last login")?;
+            .map_err(|e| AppError::InternalError(format!("Failed to update user last login: {e}")))?;
 
         let access_token = self
             .jwt_service
-            .generate_access_token(user.id, user.email.clone())?;
+            .generate_access_token(user.id, user.email.clone())
+            .map_err(|e| AppError::InternalError(format!("Failed to generate access token: {e}")))?;
 
         let (refresh_token_str, expires_at) = self
             .jwt_service
-            .generate_refresh_token(user.id, user.email.clone())?;
+            .generate_refresh_token(user.id, user.email.clone())
+            .map_err(|e| AppError::InternalError(format!("Failed to generate refresh token: {e}")))?;
 
         let refresh_token = RefreshToken::new(user.id, refresh_token_str.clone(), expires_at);
         self.refresh_token_repository
             .create(refresh_token)
             .await
-            .context("Failed to store refresh token")?;
+            .map_err(|e| AppError::InternalError(format!("Failed to store refresh token: {e}")))?;
+
+        tracing::info!(user_id = %user.id, "Login successful");
 
         Ok(LoginResult {
             access_token,

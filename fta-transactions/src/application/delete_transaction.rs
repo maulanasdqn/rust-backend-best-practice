@@ -1,31 +1,37 @@
-use fta_errors::AppError;
-use std::sync::Arc;
-use uuid::Uuid;
+//! Delete transaction use case.
 
 use crate::domain::TransactionRepository;
+use fta_errors::AppError;
+use fta_types::impl_use_case_debug;
+use std::sync::Arc;
+use tracing::instrument;
+use uuid::Uuid;
 
+/// Deletes a transaction.
 pub struct DeleteTransaction {
     repository: Arc<dyn TransactionRepository>,
 }
 
-impl std::fmt::Debug for DeleteTransaction {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("DeleteTransaction").finish()
-    }
-}
+impl_use_case_debug!(DeleteTransaction);
 
 impl DeleteTransaction {
     pub fn new(repository: Arc<dyn TransactionRepository>) -> Self {
         Self { repository }
     }
 
+    /// Permanently deletes a transaction.
+    ///
+    /// # Errors
+    /// Returns `NotFound` if the transaction doesn't exist.
+    #[instrument(skip(self), fields(transaction_id = %id))]
     pub async fn execute(&self, id: Uuid) -> Result<(), AppError> {
         self.repository
             .find_by_id(&id)
-            .await
-            .map_err(AppError::from)?
+            .await?
             .ok_or_else(|| AppError::NotFound("Transaction not found".to_string()))?;
 
-        self.repository.delete(&id).await.map_err(AppError::from)
+        self.repository.delete(&id).await?;
+        tracing::info!("Transaction deleted successfully");
+        Ok(())
     }
 }

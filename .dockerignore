@@ -1,36 +1,35 @@
+# Build artifacts
 target/
-.git/
-.gitignore
-.env
-.env.*
-!.env.example
+*.rs.bk
 
-node_modules/
-npm-debug.log
-
-*.md
-!README.md
-LICENSE
-.editorconfig
-
-.vscode/
+# IDE
 .idea/
+.vscode/
 *.swp
 *.swo
-*~
 
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Test artifacts
+coverage/
+*.profraw
+
+# OS files
 .DS_Store
 Thumbs.db
-
-*.log
-*.sqlite
-*.db
-
-docker-compose*.yml
-Dockerfile
-.dockerignore
-
-.cargo/
-**/*.rs.bk
-
-.claude/
