@@ -1,18 +1,18 @@
 [workspace]
 resolver = "2"
 members = [
-  "fta-accounts",
-  "fta-auth",
-  "fta-budgets",
-  "fta-database",
-  "fta-errors",
-  "fta-migration",
-  "fta-server",
-  "fta-test-utils",
-  "fta-transactions",
-  "fta-types",
-  "fta-users",
-  "fta-validation",
+  "abbp-accounts",
+  "abbp-auth",
+  "abbp-budgets",
+  "abbp-database",
+  "abbp-errors",
+  "abbp-migration",
+  "abbp-server",
+  "abbp-test-utils",
+  "abbp-transactions",
+  "abbp-types",
+  "abbp-users",
+  "abbp-validation",
 ]
 
 [workspace.dependencies]

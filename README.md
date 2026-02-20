@@ -46,10 +46,10 @@ vim .env
 createdb your_database_name
 
 # Run migrations
-cd fta-migration && cargo run
+cd abbp-migration && cargo run
 
 # Start the server
-cargo run --bin fta-server
+cargo run --bin abbp-server
 ```
 
 ### Option 2: Docker Setup
@@ -64,7 +64,7 @@ cp .env.example .env
 docker-compose up -d
 
 # Run migrations
-docker-compose exec app cargo run -p fta-migration
+docker-compose exec app cargo run -p abbp-migration
 
 # Server is available at http://localhost:3000
 ```
@@ -83,18 +83,18 @@ open http://localhost:3000/docs
 
 ```
 axum-backend-best-practice/
-├── fta-server/           # Application entry point
-├── fta-auth/             # Authentication module
-├── fta-users/            # User management module
-├── fta-accounts/         # Account management (example domain)
-├── fta-transactions/     # Transaction management (example domain)
-├── fta-budgets/          # Budget management (example domain)
-├── fta-database/         # Database connection pool
-├── fta-errors/           # Centralized error types
-├── fta-types/            # Shared types and utilities
-├── fta-validation/       # Validation framework
-├── fta-migration/        # Database migrations
-└── fta-test-utils/       # Testing utilities
+├── abbp-server/           # Application entry point
+├── abbp-auth/             # Authentication module
+├── abbp-users/            # User management module
+├── abbp-accounts/         # Account management (example domain)
+├── abbp-transactions/     # Transaction management (example domain)
+├── abbp-budgets/          # Budget management (example domain)
+├── abbp-database/         # Database connection pool
+├── abbp-errors/           # Centralized error types
+├── abbp-types/            # Shared types and utilities
+├── abbp-validation/       # Validation framework
+├── abbp-migration/        # Database migrations
+└── abbp-test-utils/       # Testing utilities
 ```
 
 ### Module Architecture
@@ -102,7 +102,7 @@ axum-backend-best-practice/
 Each domain module follows Clean Architecture:
 
 ```
-fta-{module}/
+abbp-{module}/
 ├── src/
 │   ├── domain/           # Entities, repository traits
 │   ├── application/      # Use cases (business logic)
@@ -228,10 +228,10 @@ RUST_LOG=info
 cargo build --workspace
 
 # Run development server
-cargo run --bin fta-server
+cargo run --bin abbp-server
 
 # Run with auto-reload
-cargo watch -x 'run --bin fta-server'
+cargo watch -x 'run --bin abbp-server'
 
 # Run tests
 cargo test --workspace
@@ -251,13 +251,13 @@ cargo doc --workspace --open
 1. Create new crate:
 
 ```bash
-cargo new fta-your-module --lib
+cargo new abbp-your-module --lib
 ```
 
 2. Follow the module structure:
 
 ```
-fta-your-module/
+abbp-your-module/
 ├── src/
 │   ├── domain/
 │   │   ├── mod.rs
@@ -275,7 +275,7 @@ fta-your-module/
 
 3. Add to workspace in root `Cargo.toml`
 
-4. Wire up routes in `fta-server/src/router.rs`
+4. Wire up routes in `abbp-server/src/router.rs`
 
 ## Security Features
 
@@ -293,7 +293,7 @@ fta-your-module/
 cargo test --workspace
 
 # Run specific module tests
-cargo test -p fta-users
+cargo test -p abbp-users
 
 # Run with output
 cargo test -- --nocapture

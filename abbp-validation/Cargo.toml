@@ -1,0 +1,15 @@
+[package]
+name = "abbp-validation"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+abbp-types = { path = "../abbp-types" }
+async-trait.workspace = true
+axum.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+zod-rs.workspace = true
+
+[lints]
+workspace = true

@@ -1,4 +1,4 @@
-# Financial Tracker API - Testing Makefile
+# Axum Backend Best Practice - Testing Makefile
 # Better UI for running tests
 
 .PHONY: help test test-watch test-fast test-coverage test-coverage-open clean lint lint-fix lint-strict lint-watch lint-package format format-check migrate migrate-revert migrate-info migrate-add migrate-reset db-create db-drop server server-watch server-release t tw tc l lf ls f fc m mr mi s sw sr
@@ -28,7 +28,7 @@ test-coverage-open: ## Generate and open coverage report
 test-coverage-lcov: ## Generate coverage in lcov format
 	cargo llvm-cov nextest --lcov --output-path lcov.info
 
-test-package: ## Test specific package (usage: make test-package PKG=fta-types)
+test-package: ## Test specific package (usage: make test-package PKG=abbp-types)
 	cargo nextest run -p $(PKG)
 
 test-unit: ## Run only unit tests
@@ -61,7 +61,7 @@ lint-strict: ## Run clippy with warnings as errors (CI mode)
 lint-watch: ## Watch and re-run clippy on file changes
 	cargo watch -x "clippy --workspace --all-targets"
 
-lint-package: ## Lint specific package (usage: make lint-package PKG=fta-types)
+lint-package: ## Lint specific package (usage: make lint-package PKG=abbp-types)
 	cargo clippy -p $(PKG) --all-targets
 
 # Code Quality - Formatting
@@ -80,27 +80,27 @@ fc: format-check ## Shortcut for 'format-check'
 
 # Database Migration Commands
 migrate: ## Run all pending migrations
-	cd fta-migration && cargo run --bin fta-migration -- run
+	cd abbp-migration && cargo run --bin abbp-migration -- run
 
 migrate-revert: ## Revert the last migration
-	cd fta-migration && cargo run --bin fta-migration -- revert
+	cd abbp-migration && cargo run --bin abbp-migration -- revert
 
 migrate-info: ## Show migration status
-	cd fta-migration && cargo run --bin fta-migration -- info
+	cd abbp-migration && cargo run --bin abbp-migration -- info
 
 migrate-add: ## Create new migration (usage: make migrate-add NAME=create_foo)
 	@if [ -z "$(NAME)" ]; then \
 		echo "Error: NAME is required. Usage: make migrate-add NAME=create_foo"; \
 		exit 1; \
 	fi
-	cd fta-migration && cargo run --bin fta-migration -- add "$(NAME)"
+	cd abbp-migration && cargo run --bin abbp-migration -- add "$(NAME)"
 
 migrate-reset: ## Drop all tables and re-run migrations (DESTRUCTIVE!)
 	@echo "⚠️  WARNING: This will DROP ALL TABLES!"
 	@read -p "Are you sure? Type 'yes' to continue: " confirm && [ "$$confirm" = "yes" ] || (echo "Aborted." && exit 1)
 	sqlx database drop -y
 	sqlx database create
-	cd fta-migration && cargo run --bin fta-migration -- run
+	cd abbp-migration && cargo run --bin abbp-migration -- run
 
 # Database Management
 db-create: ## Create the database
@@ -119,14 +119,14 @@ mr: migrate-revert ## Shortcut for 'migrate-revert'
 mi: migrate-info ## Shortcut for 'migrate-info'
 
 # Development Server
-server: ## Run the fta-server in development mode
-	cargo run -p fta-server
+server: ## Run the abbp-server in development mode
+	cargo run -p abbp-server
 
 server-watch: ## Run server with auto-reload on file changes
-	cargo watch -x "run -p fta-server"
+	cargo watch -x "run -p abbp-server"
 
 server-release: ## Run server in release mode (optimized)
-	cargo run -p fta-server --release
+	cargo run -p abbp-server --release
 
 # Server shortcuts
 s: server ## Shortcut for 'server'

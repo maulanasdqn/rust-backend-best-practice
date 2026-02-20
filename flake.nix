@@ -31,7 +31,7 @@
 
         # Common args for crane builds
         commonArgs = {
-          pname = "fta";
+          pname = "abbp";
           version = "0.1.0";
           src = craneLib.cleanCargoSource ./.;
           strictDeps = true;
@@ -60,9 +60,9 @@
         cargoArtifacts = craneLib.buildDepsOnly commonArgs;
 
         # Build the server binary
-        fta-server = craneLib.buildPackage (commonArgs // {
+        abbp-server = craneLib.buildPackage (commonArgs // {
           inherit cargoArtifacts;
-          cargoExtraArgs = "-p fta-server";
+          cargoExtraArgs = "-p abbp-server";
 
           meta = with pkgs.lib; {
             description = "Axum Backend Best Practice Server";
@@ -72,9 +72,9 @@
         });
 
         # Build the migration binary
-        fta-migration = craneLib.buildPackage (commonArgs // {
+        abbp-migration = craneLib.buildPackage (commonArgs // {
           inherit cargoArtifacts;
-          cargoExtraArgs = "-p fta-migration";
+          cargoExtraArgs = "-p abbp-migration";
 
           meta = with pkgs.lib; {
             description = "Axum Backend Best Practice Migration Tool";
@@ -85,8 +85,8 @@
       in
       {
         packages = {
-          default = fta-server;
-          inherit fta-server fta-migration;
+          default = abbp-server;
+          inherit abbp-server abbp-migration;
         };
 
         devShells.default = craneLib.devShell {
@@ -107,14 +107,14 @@
         };
 
         checks = {
-          inherit fta-server fta-migration;
+          inherit abbp-server abbp-migration;
 
-          fta-clippy = craneLib.cargoClippy (commonArgs // {
+          abbp-clippy = craneLib.cargoClippy (commonArgs // {
             inherit cargoArtifacts;
             cargoClippyExtraArgs = "--all-targets -- --deny warnings";
           });
 
-          fta-fmt = craneLib.cargoFmt {
+          abbp-fmt = craneLib.cargoFmt {
             src = craneLib.cleanCargoSource ./.;
           };
         };
@@ -122,10 +122,10 @@
     ) // {
       nixosModules.default = { config, lib, pkgs, ... }:
         let
-          cfg = config.services.fta-server;
+          cfg = config.services.abbp-server;
         in
         {
-          options.services.fta-server = {
+          options.services.abbp-server = {
             enable = lib.mkEnableOption "Axum Backend Best Practice Server";
 
             port = lib.mkOption {
@@ -148,13 +148,13 @@
 
             user = lib.mkOption {
               type = lib.types.str;
-              default = "fta-server";
+              default = "abbp-server";
               description = "User to run the service as";
             };
 
             group = lib.mkOption {
               type = lib.types.str;
-              default = "fta-server";
+              default = "abbp-server";
               description = "Group to run the service as";
             };
 
@@ -198,10 +198,10 @@
 
             networking.firewall.allowedTCPPorts = lib.mkIf cfg.openFirewall [ cfg.port ];
 
-            systemd.services.fta-server = {
+            systemd.services.abbp-server = {
               description = "Axum Backend Best Practice Server";
               wantedBy = [ "multi-user.target" ];
-              after = [ "network.target" "postgresql.service" "redis-fta.service" ];
+              after = [ "network.target" "postgresql.service" "redis-abbp.service" ];
               requires = [ "postgresql.service" ];
 
               environment = {
@@ -216,7 +216,7 @@
                 Type = "simple";
                 User = cfg.user;
                 Group = cfg.group;
-                ExecStart = "${self.packages.${pkgs.system}.fta-server}/bin/fta-server";
+                ExecStart = "${self.packages.${pkgs.system}.abbp-server}/bin/abbp-server";
                 Restart = "always";
                 RestartSec = "10s";
                 EnvironmentFile = lib.mkIf (cfg.environmentFile != null) cfg.environmentFile;

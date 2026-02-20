@@ -30,7 +30,7 @@ This project and everyone participating in it is governed by our commitment to p
    cp .env.example .env
    # Edit .env with your local settings
    docker-compose up -d postgres
-   cd fta-migration && cargo run
+   cd abbp-migration && cargo run
    ```
 4. **Create a branch** for your changes:
    ```bash
@@ -161,7 +161,7 @@ test(transactions): add integration tests for transfers
 
 1. Create the crate structure:
    ```
-   fta-your-module/
+   abbp-your-module/
    ├── src/
    │   ├── domain/
    │   │   ├── mod.rs
@@ -187,9 +187,9 @@ test(transactions): add integration tests for transfers
 
 2. Add to workspace in root `Cargo.toml`
 
-3. Create migrations in `fta-migration/migrations/`
+3. Create migrations in `abbp-migration/migrations/`
 
-4. Wire up routes in `fta-server/src/router.rs`
+4. Wire up routes in `abbp-server/src/router.rs`
 
 5. Add OpenAPI documentation
 
@@ -199,7 +199,7 @@ test(transactions): add integration tests for transfers
 
 - **Unit tests**: In the same file as the code, in `#[cfg(test)]` module
 - **Integration tests**: In `tests/` directory of each crate
-- **End-to-end tests**: In `fta-test-utils` or separate test crate
+- **End-to-end tests**: In `abbp-test-utils` or separate test crate
 
 ### Test Naming
 

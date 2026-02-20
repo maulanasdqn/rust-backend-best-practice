@@ -1,0 +1,30 @@
+[package]
+name = "abbp-users"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Shared
+abbp-types = { path = "../abbp-types" }
+abbp-errors = { path = "../abbp-errors" }
+abbp-database = { path = "../abbp-database" }
+abbp-validation = { path = "../abbp-validation" }
+
+# Workspace dependencies
+argon2.workspace = true
+async-trait.workspace = true
+axum.workspace = true
+chrono.workspace = true
+paginator-rs.workspace = true
+paginator-utils.workspace = true
+paginator-axum.workspace = true
+sea-orm.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+utoipa.workspace = true
+uuid.workspace = true
+
+[lints]
+workspace = true

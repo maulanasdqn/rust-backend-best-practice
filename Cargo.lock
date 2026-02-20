@@ -3,6 +3,248 @@
 version = 4
 
 [[package]]
+name = "abbp-accounts"
+version = "0.1.0"
+dependencies = [
+ "abbp-database",
+ "abbp-errors",
+ "abbp-types",
+ "abbp-validation",
+ "async-trait",
+ "axum 0.8.8",
+ "chrono",
+ "paginator-axum",
+ "paginator-rs",
+ "paginator-utils",
+ "sea-orm",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "utoipa",
+ "uuid",
+]
+
+[[package]]
+name = "abbp-auth"
+version = "0.1.0"
+dependencies = [
+ "abbp-database",
+ "abbp-errors",
+ "abbp-types",
+ "abbp-users",
+ "abbp-validation",
+ "anyhow",
+ "argon2",
+ "async-trait",
+ "axum 0.8.8",
+ "base32",
+ "chrono",
+ "google-oauth",
+ "hex",
+ "jsonwebtoken",
+ "lettre",
+ "qrcode",
+ "rand 0.9.2",
+ "redis",
+ "reqwest",
+ "sea-orm",
+ "serde",
+ "serde_json",
+ "tokio",
+ "totp-rs",
+ "tracing",
+ "urlencoding",
+ "utoipa",
+ "uuid",
+]
+
+[[package]]
+name = "abbp-budgets"
+version = "0.1.0"
+dependencies = [
+ "abbp-database",
+ "abbp-errors",
+ "abbp-types",
+ "abbp-validation",
+ "async-trait",
+ "axum 0.8.8",
+ "chrono",
+ "paginator-axum",
+ "paginator-rs",
+ "paginator-utils",
+ "sea-orm",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "utoipa",
+ "uuid",
+]
+
+[[package]]
+name = "abbp-database"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "sea-orm",
+ "serde",
+ "serde_json",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
+name = "abbp-errors"
+version = "0.1.0"
+dependencies = [
+ "abbp-types",
+ "anyhow",
+ "axum 0.8.8",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.17",
+ "utoipa",
+]
+
+[[package]]
+name = "abbp-migration"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "clap",
+ "dotenvy",
+ "sea-orm",
+ "tokio",
+]
+
+[[package]]
+name = "abbp-server"
+version = "0.1.0"
+dependencies = [
+ "abbp-accounts",
+ "abbp-auth",
+ "abbp-budgets",
+ "abbp-database",
+ "abbp-errors",
+ "abbp-transactions",
+ "abbp-types",
+ "abbp-users",
+ "anyhow",
+ "axum 0.8.8",
+ "dotenvy",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tower",
+ "tower-http",
+ "tower_governor",
+ "tracing",
+ "tracing-appender",
+ "tracing-subscriber",
+ "utoipa",
+ "utoipa-axum",
+ "utoipa-swagger-ui",
+]
+
+[[package]]
+name = "abbp-test-utils"
+version = "0.1.0"
+dependencies = [
+ "abbp-database",
+ "abbp-errors",
+ "abbp-types",
+ "axum 0.8.8",
+ "chrono",
+ "dotenvy",
+ "fake",
+ "http-body-util",
+ "rand 0.8.5",
+ "reqwest",
+ "sea-orm",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tower",
+ "uuid",
+]
+
+[[package]]
+name = "abbp-transactions"
+version = "0.1.0"
+dependencies = [
+ "abbp-database",
+ "abbp-errors",
+ "abbp-types",
+ "abbp-validation",
+ "async-trait",
+ "axum 0.8.8",
+ "chrono",
+ "paginator-axum",
+ "paginator-rs",
+ "paginator-utils",
+ "sea-orm",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "utoipa",
+ "uuid",
+]
+
+[[package]]
+name = "abbp-types"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "paginator-axum",
+ "paginator-rs",
+ "paginator-utils",
+ "serde",
+ "serde_json",
+ "utoipa",
+ "uuid",
+]
+
+[[package]]
+name = "abbp-users"
+version = "0.1.0"
+dependencies = [
+ "abbp-database",
+ "abbp-errors",
+ "abbp-types",
+ "abbp-validation",
+ "argon2",
+ "async-trait",
+ "axum 0.8.8",
+ "chrono",
+ "paginator-axum",
+ "paginator-rs",
+ "paginator-utils",
+ "sea-orm",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "utoipa",
+ "uuid",
+]
+
+[[package]]
+name = "abbp-validation"
+version = "0.1.0"
+dependencies = [
+ "abbp-types",
+ "async-trait",
+ "axum 0.8.8",
+ "serde",
+ "serde_json",
+ "zod-rs",
+]
+
+[[package]]
 name = "adler2"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1053,248 +1295,6 @@ checksum = "8835f84f38484cc86f110a805655697908257fb9a7af005234060891557198e9"
 dependencies = [
  "nonempty",
  "thiserror 1.0.69",
-]
-
-[[package]]
-name = "fta-accounts"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "axum 0.8.8",
- "chrono",
- "fta-database",
- "fta-errors",
- "fta-types",
- "fta-validation",
- "paginator-axum",
- "paginator-rs",
- "paginator-utils",
- "sea-orm",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
- "utoipa",
- "uuid",
-]
-
-[[package]]
-name = "fta-auth"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "argon2",
- "async-trait",
- "axum 0.8.8",
- "base32",
- "chrono",
- "fta-database",
- "fta-errors",
- "fta-types",
- "fta-users",
- "fta-validation",
- "google-oauth",
- "hex",
- "jsonwebtoken",
- "lettre",
- "qrcode",
- "rand 0.9.2",
- "redis",
- "reqwest",
- "sea-orm",
- "serde",
- "serde_json",
- "tokio",
- "totp-rs",
- "tracing",
- "urlencoding",
- "utoipa",
- "uuid",
-]
-
-[[package]]
-name = "fta-budgets"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "axum 0.8.8",
- "chrono",
- "fta-database",
- "fta-errors",
- "fta-types",
- "fta-validation",
- "paginator-axum",
- "paginator-rs",
- "paginator-utils",
- "sea-orm",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
- "utoipa",
- "uuid",
-]
-
-[[package]]
-name = "fta-database"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "chrono",
- "sea-orm",
- "serde",
- "serde_json",
- "tokio",
- "uuid",
-]
-
-[[package]]
-name = "fta-errors"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "axum 0.8.8",
- "fta-types",
- "serde",
- "serde_json",
- "thiserror 2.0.17",
- "utoipa",
-]
-
-[[package]]
-name = "fta-migration"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "chrono",
- "clap",
- "dotenvy",
- "sea-orm",
- "tokio",
-]
-
-[[package]]
-name = "fta-server"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "axum 0.8.8",
- "dotenvy",
- "fta-accounts",
- "fta-auth",
- "fta-budgets",
- "fta-database",
- "fta-errors",
- "fta-transactions",
- "fta-types",
- "fta-users",
- "serde",
- "serde_json",
- "tokio",
- "tower",
- "tower-http",
- "tower_governor",
- "tracing",
- "tracing-appender",
- "tracing-subscriber",
- "utoipa",
- "utoipa-axum",
- "utoipa-swagger-ui",
-]
-
-[[package]]
-name = "fta-test-utils"
-version = "0.1.0"
-dependencies = [
- "axum 0.8.8",
- "chrono",
- "dotenvy",
- "fake",
- "fta-database",
- "fta-errors",
- "fta-types",
- "http-body-util",
- "rand 0.8.5",
- "reqwest",
- "sea-orm",
- "serde",
- "serde_json",
- "tokio",
- "tower",
- "uuid",
-]
-
-[[package]]
-name = "fta-transactions"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "axum 0.8.8",
- "chrono",
- "fta-database",
- "fta-errors",
- "fta-types",
- "fta-validation",
- "paginator-axum",
- "paginator-rs",
- "paginator-utils",
- "sea-orm",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
- "utoipa",
- "uuid",
-]
-
-[[package]]
-name = "fta-types"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "paginator-axum",
- "paginator-rs",
- "paginator-utils",
- "serde",
- "serde_json",
- "utoipa",
- "uuid",
-]
-
-[[package]]
-name = "fta-users"
-version = "0.1.0"
-dependencies = [
- "argon2",
- "async-trait",
- "axum 0.8.8",
- "chrono",
- "fta-database",
- "fta-errors",
- "fta-types",
- "fta-validation",
- "paginator-axum",
- "paginator-rs",
- "paginator-utils",
- "sea-orm",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
- "utoipa",
- "uuid",
-]
-
-[[package]]
-name = "fta-validation"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "axum 0.8.8",
- "fta-types",
- "serde",
- "serde_json",
- "zod-rs",
 ]
 
 [[package]]
