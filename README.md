@@ -1,4 +1,4 @@
-# Axum Clean Architecture
+# Axum Backend Best Practice
 
 > A production-ready Rust backend boilerplate using Clean Architecture, Domain-Driven Design, and modern Rust patterns.
 
@@ -33,8 +33,8 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/axum-clean-architecture.git
-cd axum-clean-architecture
+git clone https://github.com/yourusername/axum-backend-best-practice.git
+cd axum-backend-best-practice
 
 # Copy environment template
 cp .env.example .env
@@ -56,8 +56,8 @@ cargo run --bin fta-server
 
 ```bash
 # Clone and setup
-git clone https://github.com/yourusername/axum-clean-architecture.git
-cd axum-clean-architecture
+git clone https://github.com/yourusername/axum-backend-best-practice.git
+cd axum-backend-best-practice
 cp .env.example .env
 
 # Start all services
@@ -82,7 +82,7 @@ open http://localhost:3000/docs
 ## Project Structure
 
 ```
-axum-clean-architecture/
+axum-backend-best-practice/
 ├── fta-server/           # Application entry point
 ├── fta-auth/             # Authentication module
 ├── fta-users/            # User management module
@@ -143,38 +143,40 @@ HTTP Request → Handler → Use Case → Repository Trait
 
 ## Technology Stack
 
-| Category | Technology |
-|----------|------------|
-| Framework | Axum 0.8 |
-| Runtime | Tokio |
-| Database | PostgreSQL + SeaORM |
-| Auth | JWT + Argon2 + TOTP |
-| Validation | zod-rs |
+| Category      | Technology           |
+| ------------- | -------------------- |
+| Framework     | Axum 0.8             |
+| Runtime       | Tokio                |
+| Database      | PostgreSQL + SeaORM  |
+| Auth          | JWT + Argon2 + TOTP  |
+| Validation    | zod-rs               |
 | Documentation | utoipa (OpenAPI 3.0) |
-| Logging | tracing |
-| Testing | tokio-test |
+| Logging       | tracing              |
+| Testing       | tokio-test           |
 
 ## API Endpoints
 
 ### Authentication
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/v1/auth/register` | Register new user |
-| POST | `/api/v1/auth/login` | Login |
-| POST | `/api/v1/auth/logout` | Logout |
-| POST | `/api/v1/auth/refresh` | Refresh access token |
-| POST | `/api/v1/auth/change-password` | Change password |
-| GET | `/api/v1/auth/google` | Google OAuth login |
-| POST | `/api/v1/auth/2fa/enable` | Enable 2FA |
-| POST | `/api/v1/auth/2fa/verify` | Verify 2FA code |
+
+| Method | Endpoint                       | Description          |
+| ------ | ------------------------------ | -------------------- |
+| POST   | `/api/v1/auth/register`        | Register new user    |
+| POST   | `/api/v1/auth/login`           | Login                |
+| POST   | `/api/v1/auth/logout`          | Logout               |
+| POST   | `/api/v1/auth/refresh`         | Refresh access token |
+| POST   | `/api/v1/auth/change-password` | Change password      |
+| GET    | `/api/v1/auth/google`          | Google OAuth login   |
+| POST   | `/api/v1/auth/2fa/enable`      | Enable 2FA           |
+| POST   | `/api/v1/auth/2fa/verify`      | Verify 2FA code      |
 
 ### Users
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/users` | List users |
-| GET | `/api/v1/users/:id` | Get user |
-| POST | `/api/v1/users` | Create user |
-| PATCH | `/api/v1/users/:id` | Update user |
+
+| Method | Endpoint            | Description |
+| ------ | ------------------- | ----------- |
+| GET    | `/api/v1/users`     | List users  |
+| GET    | `/api/v1/users/:id` | Get user    |
+| POST   | `/api/v1/users`     | Create user |
+| PATCH  | `/api/v1/users/:id` | Update user |
 | DELETE | `/api/v1/users/:id` | Delete user |
 
 ### Example Domains (Accounts, Transactions, Budgets)
@@ -247,11 +249,13 @@ cargo doc --workspace --open
 ### Adding a New Domain Module
 
 1. Create new crate:
+
 ```bash
 cargo new fta-your-module --lib
 ```
 
 2. Follow the module structure:
+
 ```
 fta-your-module/
 ├── src/
@@ -304,10 +308,10 @@ cargo test --test integration
 
 ```bash
 # Build image
-docker build -t axum-clean-architecture .
+docker build -t axum-backend-best-practice .
 
 # Run container
-docker run -p 3000:3000 --env-file .env axum-clean-architecture
+docker run -p 3000:3000 --env-file .env axum-backend-best-practice
 ```
 
 ### Production Checklist

@@ -4,11 +4,11 @@ services:
   # PostgreSQL Database
   postgres:
     image: postgres:17-alpine
-    container_name: axum-postgres
+    container_name: abbp-postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: axum_clean_arch
+      POSTGRES_DB: abbp
     ports:
       - "5432:5432"
     volumes:
@@ -19,12 +19,12 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - axum-network
+      - abbp-network
 
   # Redis (optional - for caching/sessions)
   redis:
     image: redis:7-alpine
-    container_name: axum-redis
+    container_name: abbp-redis
     ports:
       - "6379:6379"
     volumes:
@@ -35,18 +35,18 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - axum-network
+      - abbp-network
 
   # Application (uncomment when you have a Dockerfile)
   # app:
   #   build:
   #     context: .
   #     dockerfile: Dockerfile
-  #   container_name: axum-app
+  #   container_name: abbp-app
   #   ports:
   #     - "3000:3000"
   #   environment:
-  #     DATABASE_URL: postgresql://postgres:postgres@postgres:5432/axum_clean_arch
+  #     DATABASE_URL: postgresql://postgres:postgres@postgres:5432/abbp
   #     REDIS_URL: redis://redis:6379
   #   env_file:
   #     - .env
@@ -56,12 +56,12 @@ services:
   #     redis:
   #       condition: service_healthy
   #   networks:
-  #     - axum-network
+  #     - abbp-network
 
   # pgAdmin (optional - database management UI)
   pgadmin:
     image: dpage/pgadmin4:latest
-    container_name: axum-pgadmin
+    container_name: abbp-pgadmin
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
       PGADMIN_DEFAULT_PASSWORD: admin
@@ -71,19 +71,19 @@ services:
     depends_on:
       - postgres
     networks:
-      - axum-network
+      - abbp-network
     profiles:
       - tools
 
   # MailHog (local email testing)
   mailhog:
     image: mailhog/mailhog:latest
-    container_name: axum-mailhog
+    container_name: abbp-mailhog
     ports:
       - "1025:1025"  # SMTP server
       - "8025:8025"  # Web UI
     networks:
-      - axum-network
+      - abbp-network
     profiles:
       - tools
 
@@ -92,5 +92,5 @@ volumes:
   redis_data:
 
 networks:
-  axum-network:
+  abbp-network:
     driver: bridge

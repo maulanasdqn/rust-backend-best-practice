@@ -1,5 +1,5 @@
 {
-  description = "Financial Tracker API - Rust Backend";
+  description = "Axum Backend Best Practice - Rust Backend";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -65,7 +65,7 @@
           cargoExtraArgs = "-p fta-server";
 
           meta = with pkgs.lib; {
-            description = "Financial Tracker API Server";
+            description = "Axum Backend Best Practice Server";
             license = licenses.mit;
             maintainers = [ ];
           };
@@ -77,7 +77,7 @@
           cargoExtraArgs = "-p fta-migration";
 
           meta = with pkgs.lib; {
-            description = "Financial Tracker Database Migration Tool";
+            description = "Axum Backend Best Practice Migration Tool";
             license = licenses.mit;
             maintainers = [ ];
           };
@@ -100,7 +100,7 @@
           ];
 
           shellHook = ''
-            echo "Financial Tracker Development Environment"
+            echo "Axum Backend Best Practice Development Environment"
             echo "Rust: $(rustc --version)"
             echo "Cargo: $(cargo --version)"
           '';
@@ -126,7 +126,7 @@
         in
         {
           options.services.fta-server = {
-            enable = lib.mkEnableOption "Financial Tracker API Server";
+            enable = lib.mkEnableOption "Axum Backend Best Practice Server";
 
             port = lib.mkOption {
               type = lib.types.port;
@@ -191,7 +191,7 @@
             users.users.${cfg.user} = {
               isSystemUser = true;
               group = cfg.group;
-              description = "Financial Tracker API service user";
+              description = "Axum Backend Best Practice service user";
             };
 
             users.groups.${cfg.group} = { };
@@ -199,7 +199,7 @@
             networking.firewall.allowedTCPPorts = lib.mkIf cfg.openFirewall [ cfg.port ];
 
             systemd.services.fta-server = {
-              description = "Financial Tracker API Server";
+              description = "Axum Backend Best Practice Server";
               wantedBy = [ "multi-user.target" ];
               after = [ "network.target" "postgresql.service" "redis-fta.service" ];
               requires = [ "postgresql.service" ];

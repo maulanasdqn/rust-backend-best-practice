@@ -1,4 +1,4 @@
-# Contributing to Axum Clean Architecture
+# Contributing to Axum Backend Best Practice
 
 First off, thank you for considering contributing to this project! It's people like you that make this boilerplate better for everyone.
 
@@ -22,8 +22,8 @@ This project and everyone participating in it is governed by our commitment to p
 1. **Fork the repository** on GitHub
 2. **Clone your fork** locally:
    ```bash
-   git clone https://github.com/your-username/axum-clean-architecture.git
-   cd axum-clean-architecture
+   git clone https://github.com/your-username/axum-backend-best-practice.git
+   cd axum-backend-best-practice
    ```
 3. **Set up the development environment**:
    ```bash
